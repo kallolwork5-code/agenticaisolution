@@ -7,3 +7,4 @@ langchain
 langgraph
 langchain-openai
 sqlalchemy
+chromadb

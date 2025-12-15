@@ -1,3 +1,7 @@
+"""
+Ingestion API.
+"""
+
 from fastapi import APIRouter, UploadFile, File
 import pandas as pd
 from app.agents.ingestion_graph import build_ingestion_graph
