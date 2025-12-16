@@ -62,6 +62,7 @@
   - Convert network distribution data to PieChartData format
   - Convert settlement period data to BarChartData format
   - Convert currency ranges data to BarChartData format
+
   - Convert card type data to PieChartData format
   - Convert gross/off-net data to PieChartData format
   - Generate sample trend data for metric cards
@@ -69,6 +70,7 @@
 
 - [ ] 8. Replace CSS-based bar charts with Recharts components
   - Replace acquirer performance chart with InteractiveBarChart
+
   - Replace settlement period chart with InteractiveBarChart
   - Replace currency ranges chart with InteractiveBarChart
   - Remove old CSS-based BarChart component
