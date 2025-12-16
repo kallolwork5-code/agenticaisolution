@@ -51,21 +51,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Header - Only shown on carousel page */}
-      <header className="bg-gray-800 border-b border-gray-700 px-6 py-4">
+      <header className="bg-black border-b border-green-500/20 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-white">CollectiSense</h1>
-            <span className="text-gray-400">Digital Reconciliation Platform</span>
+            <h1 className="text-2xl font-bold text-green-400">CollectiSense</h1>
+            <span className="text-green-300/70">Digital Reconciliation Platform</span>
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="p-2 text-gray-400 hover:text-white transition-colors">
+            <button className="p-2 text-green-400/70 hover:text-green-400 transition-colors">
               <Bell className="w-5 h-5" />
             </button>
-            <button className="p-2 text-gray-400 hover:text-white transition-colors">
+            <button className="p-2 text-green-400/70 hover:text-green-400 transition-colors">
               <Settings className="w-5 h-5" />
             </button>
-            <button className="p-2 text-gray-400 hover:text-white transition-colors">
+            <button className="p-2 text-green-400/70 hover:text-green-400 transition-colors">
               <User className="w-5 h-5" />
             </button>
             <button

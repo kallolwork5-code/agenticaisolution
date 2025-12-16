@@ -1,23 +1,18 @@
 'use client'
 
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
-import { 
-  ArrowLeft, 
-  Upload, 
-  Database, 
-  FileSpreadsheet, 
-  Download,
-  Eye,
-  Trash2,
-  Filter,
-  RefreshCw,
-  Brain,
-  History,
-  Settings
+import React, { useState, useCallback, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Search,
+  CheckCircle
 } from 'lucide-react'
 import FileUploadZone from '../upload/FileUploadZone'
 import AgentThinkingPanel from '../upload/AgentThinkingPanel'
+import ProgressTracker from '../upload/ProgressTracker'
+import UploadHistory from '../upload/UploadHistory'
 
 interface DataManagementProps {
   onBack: () => void
@@ -31,12 +26,28 @@ interface UploadState {
   error: string | null
 }
 
+interface ProgressStage {
+  id: string
+  name: string
+  status: 'pending' | 'active' | 'completed' | 'error'
+  progress: number
+  startTime?: Date
+  endTime?: Date
+  error?: string
+}
+
 interface AgentThought {
   id: string
   timestamp: Date
   type: 'analysis' | 'prompt' | 'rule' | 'decision'
   content: string
   confidence: number
+  metadata?: {
+    promptUsed?: string
+    ruleApplied?: string
+    dataPoints?: number
+    processingTime?: number
+  }
 }
 
 interface UploadHistoryItem {
@@ -62,407 +73,434 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
   })
 
   const [agentThoughts, setAgentThoughts] = useState<AgentThought[]>([])
-  const [selectedHistoryItem, setSelectedHistoryItem] = useState<UploadHistoryItem | null>(null)
-  const [currentView, setCurrentView] = useState<'upload' | 'history'>('upload')
+  const [, setSelectedHistoryItem] = useState<UploadHistoryItem | null>(null)
+  const [progressStages, setProgressStages] = useState<ProgressStage[]>([])
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<number>(0)
 
-  // Handle file selection from FileUploadZone
-  const handleFileSelect = (files: FileList) => {
-    if (files.length > 0) {
-      const file = files[0] // For now, handle one file at a time
-      setUploadState(prev => ({
-        ...prev,
-        isUploading: true,
-        currentFile: file,
-        progress: 0,
-        stage: 'upload',
-        error: null
-      }))
-      
-      // Simulate upload process with agent thinking
-      simulateUploadProcess(file)
-    }
+  // Prompt selector state
+  const [showPromptSelector, setShowPromptSelector] = useState(false)
+  const [selectedPrompt, setSelectedPrompt] = useState<any>(null)
+  const [availablePrompts, setAvailablePrompts] = useState<any[]>([])
+
+  // Upload history from database
+  const [uploadHistory, setUploadHistory] = useState<UploadHistoryItem[]>([])
+
+  // Initialize progress stages
+  const initializeProgressStages = () => {
+    const stages: ProgressStage[] = [
+      { id: 'upload', name: 'File Upload', status: 'pending', progress: 0 },
+      { id: 'analyze', name: 'Data Analysis', status: 'pending', progress: 0 },
+      { id: 'classify', name: 'AI Classification', status: 'pending', progress: 0 },
+      { id: 'store', name: 'Storage Routing', status: 'pending', progress: 0 },
+      { id: 'complete', name: 'Completion', status: 'pending', progress: 0 }
+    ]
+    setProgressStages(stages)
   }
 
-  // Simulate the upload and classification process
+  // Update progress stage
+  const updateProgressStage = (stageId: string, updates: Partial<ProgressStage>) => {
+    setProgressStages(prev =>
+      prev.map(stage =>
+        stage.id === stageId ? { ...stage, ...updates } : stage
+      )
+    )
+  }
+
+  // Handle file selection
+  const handleFileSelect = (files: FileList) => {
+    if (files.length === 0) return
+
+    const file = files[0] // Take the first file
+    setUploadState({
+      isUploading: true,
+      currentFile: file,
+      progress: 0,
+      stage: 'upload',
+      error: null
+    })
+
+    // Initialize progress tracking
+    initializeProgressStages()
+
+    // Start upload simulation
+    simulateUploadProcess(file)
+  }
+
+  // Simulate upload process with stages
   const simulateUploadProcess = async (file: File) => {
-    const stages = ['upload', 'analyze', 'classify', 'store', 'complete'] as const
-    
+    const stages = ['upload', 'analyze', 'classify', 'store', 'complete']
+
     for (let i = 0; i < stages.length; i++) {
       const stage = stages[i]
-      
-      setUploadState(prev => ({
-        ...prev,
-        stage,
-        progress: (i / stages.length) * 100
-      }))
 
-      // Add agent thoughts for each stage
-      addAgentThought(stage, file)
-      
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Update stage to active
+      updateProgressStage(stage, {
+        status: 'active',
+        startTime: new Date(),
+        progress: 0
+      })
+
+      // Add agent thoughts for this stage
+      addAgentThought('analysis', `Starting ${stage} phase for ${file.name}`, 0.9)
+
+      // Simulate progress for this stage
+      for (let progress = 0; progress <= 100; progress += 10) {
+        await new Promise(resolve => setTimeout(resolve, 200))
+        updateProgressStage(stage, { progress })
+
+        // Update overall progress
+        const overallProgress = ((i * 100) + progress) / stages.length
+        setUploadState(prev => ({ ...prev, progress: overallProgress }))
+      }
+
+      // Mark stage as completed
+      updateProgressStage(stage, {
+        status: 'completed',
+        progress: 100,
+        endTime: new Date()
+      })
+
+      // Add completion thought
+      addAgentThought('decision', `${stage} phase completed successfully`, 0.95)
     }
 
-    // Complete the upload
+    // Final completion
     setUploadState(prev => ({
       ...prev,
       isUploading: false,
-      progress: 100,
-      stage: 'complete'
+      stage: 'complete',
+      progress: 100
     }))
+
+    // Reload upload history
+    loadUploadHistory()
   }
 
-  // Add agent thoughts based on stage
-  const addAgentThought = (stage: string, file: File) => {
-    const thoughts = {
-      upload: `Receiving file "${file.name}" (${(file.size / 1024 / 1024).toFixed(2)} MB). Validating file integrity and format.`,
-      analyze: `Analyzing data structure... Detected ${file.type || 'unknown'} format. Examining column headers and data patterns.`,
-      classify: `Applying classification prompts... File appears to contain ${file.name.includes('transaction') ? 'transaction data' : file.name.includes('rate') ? 'rate card information' : 'routing rules'}. Confidence: 92%`,
-      store: `Routing to ${file.name.includes('json') ? 'ChromaDB for vector storage' : 'SQLite for structured storage'}. Creating indexes and relationships.`,
-      complete: `Upload completed successfully! File processed and stored with full metadata tracking.`
-    }
-
+  // Add agent thought
+  const addAgentThought = useCallback((type: AgentThought['type'], content: string, confidence: number, metadata?: AgentThought['metadata']) => {
     const newThought: AgentThought = {
       id: `${Date.now()}-${Math.random()}`,
       timestamp: new Date(),
-      type: stage === 'classify' ? 'prompt' : stage === 'store' ? 'decision' : 'analysis',
-      content: thoughts[stage as keyof typeof thoughts] || 'Processing...',
-      confidence: stage === 'classify' ? 0.92 : 0.85
+      type,
+      content,
+      confidence,
+      metadata
     }
 
     setAgentThoughts(prev => [...prev, newThought])
-  }
+  }, [])
 
-  // Sample upload history data
-  const uploadHistory: UploadHistoryItem[] = [
-    {
-      id: '1',
-      fileName: 'Transaction_Data_Dec2024.csv',
-      fileSize: 2400000,
-      uploadDate: new Date('2024-12-16'),
-      classification: 'Transaction Data',
-      storageLocation: 'sqlite',
-      recordCount: 15420,
-      status: 'success',
-      aiSummary: 'High-quality transaction data with complete payment information and minimal missing values.'
-    },
-    {
-      id: '2',
-      fileName: 'MDR_Rate_Card_Q4.xlsx',
-      fileSize: 856000,
-      uploadDate: new Date('2024-12-15'),
-      classification: 'Rate Card',
-      storageLocation: 'sqlite',
-      recordCount: 2340,
-      status: 'processing'
-    },
-    {
-      id: '3',
-      fileName: 'Routing_Logic_Rules.json',
-      fileSize: 124000,
-      uploadDate: new Date('2024-12-14'),
-      classification: 'Routing Rules',
-      storageLocation: 'chromadb',
-      recordCount: 89,
-      status: 'success',
-      aiSummary: 'Complex routing rules with decision trees. Suitable for vector search and similarity matching.'
+  // Load upload history from database
+  const loadUploadHistory = useCallback(async () => {
+    try {
+      const response = await fetch('/api/upload/history')
+      if (response.ok) {
+        const history = await response.json()
+        setUploadHistory(history)
+      } else {
+        // Fallback to mock data if API doesn't exist yet
+        const mockHistory: UploadHistoryItem[] = [
+          {
+            id: '1',
+            fileName: 'customer_data.csv',
+            fileSize: 2048576,
+            uploadDate: new Date('2024-12-15T10:30:00'),
+            classification: 'Customer Data',
+            storageLocation: 'sqlite',
+            recordCount: 15420,
+            status: 'success',
+            aiSummary: 'Customer dataset with demographics and purchase history. High data quality detected.'
+          },
+          {
+            id: '2',
+            fileName: 'product_reviews.json',
+            fileSize: 1536000,
+            uploadDate: new Date('2024-12-14T14:22:00'),
+            classification: 'Text Data',
+            storageLocation: 'chromadb',
+            recordCount: 8750,
+            status: 'success',
+            aiSummary: 'Product review text data suitable for sentiment analysis and NLP processing.'
+          }
+        ]
+        setUploadHistory(mockHistory)
+      }
+    } catch (error) {
+      console.error('Failed to load upload history:', error)
+      // Provide empty array as fallback
+      setUploadHistory([])
     }
-  ]
+  }, [])
 
-  const dataFiles = [
-    {
-      id: 1,
-      name: 'Transaction_Data_Dec2024.csv',
-      type: 'Transaction Data',
-      size: '2.4 MB',
-      records: 15420,
-      uploadDate: '2024-12-16',
-      status: 'Processed',
-      statusColor: 'text-green-400'
-    },
-    {
-      id: 2,
-      name: 'MDR_Rate_Card_Q4.xlsx',
-      type: 'Rate Card',
-      size: '856 KB',
-      records: 2340,
-      uploadDate: '2024-12-15',
-      status: 'Processing',
-      statusColor: 'text-yellow-400'
-    },
-    {
-      id: 3,
-      name: 'Routing_Logic_Rules.json',
-      type: 'Routing Rules',
-      size: '124 KB',
-      records: 89,
-      uploadDate: '2024-12-14',
-      status: 'Processed',
-      statusColor: 'text-green-400'
-    },
-    {
-      id: 4,
-      name: 'SLA_Requirements_2024.csv',
-      type: 'SLA Data',
-      size: '445 KB',
-      records: 567,
-      uploadDate: '2024-12-13',
-      status: 'Failed',
-      statusColor: 'text-red-400'
+  // Load history on component mount
+  useEffect(() => {
+    loadUploadHistory()
+  }, [loadUploadHistory])
+
+  // Load available prompts on component mount
+  useEffect(() => {
+    const loadPrompts = async () => {
+      try {
+        const response = await fetch('/api/prompts')
+        if (response.ok) {
+          const prompts = await response.json()
+          setAvailablePrompts(prompts)
+        } else {
+          // Mock prompts for now
+          setAvailablePrompts([
+            { id: 1, name: 'Financial Data Classifier', description: 'Specialized for transaction and payment data', category: 'finance' },
+            { id: 2, name: 'Customer Data Analyzer', description: 'Optimized for customer demographics and behavior', category: 'customer' },
+            { id: 3, name: 'Document Parser', description: 'General purpose document and text analysis', category: 'document' },
+            { id: 4, name: 'Rate Card Processor', description: 'Specialized for pricing and rate information', category: 'finance' },
+            { id: 5, name: 'Routing Rules Engine', description: 'Payment routing and decision logic', category: 'routing' }
+          ])
+        }
+      } catch (error) {
+        console.error('Failed to load prompts:', error)
+      }
     }
-  ]
-
-  const stats = [
-    { label: 'Total Files', value: '247', icon: Database, color: 'bg-green-500' },
-    { label: 'Total Records', value: '1.2M', icon: FileSpreadsheet, color: 'bg-green-600' },
-    { label: 'Processing Queue', value: '12', icon: RefreshCw, color: 'bg-white' },
-    { label: 'Storage Used', value: '45.2 GB', icon: Database, color: 'bg-green-400' }
-  ]
+    loadPrompts()
+  }, [])
 
   return (
-    <div className="min-h-screen bg-black p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div
-          className="flex items-center justify-between mb-12"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="flex items-center gap-6">
-            <button
-              onClick={onBack}
-              className="w-12 h-12 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-all duration-300"
-            >
-              <ArrowLeft className="w-5 h-5 text-white" />
-            </button>
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Data Management</h1>
-              <p className="text-white/60 text-lg">Upload and manage transaction data, rate cards, and routing rules</p>
+    <div className="min-h-screen bg-black relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -inset-10 opacity-50">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-500/10 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
+          <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-teal-500/10 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
+        </div>
+      </div>
+
+      <div className="relative z-10 p-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <motion.div
+            className="flex items-center justify-between mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="flex items-center gap-4">
+              <button
+                onClick={onBack}
+                className="w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-white" />
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold text-white">Data Management</h1>
+                <p className="text-white/60">Upload, classify, and manage your data with AI assistance</p>
+              </div>
             </div>
-          </div>
-          
-          <button className="bg-green-500 hover:bg-green-600 text-black font-semibold px-8 py-4 rounded-xl flex items-center gap-3 transition-all duration-300 shadow-lg hover:shadow-green-500/25">
-            <Upload className="w-5 h-5" />
-            Upload Data
-          </button>
-        </motion.div>
-
-        {/* Two-Column Layout: Upload Section (60%) + History Section (40%) */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Upload Section - Left Column (60%) */}
-          <div className="lg:col-span-3 space-y-8">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white/60 text-sm">{stat.label}</p>
-                      <p className="text-2xl font-bold text-white">{stat.value}</p>
-                    </div>
-                    <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center`}>
-                      <stat.icon className={`w-6 h-6 ${stat.color === 'bg-white' ? 'text-black' : 'text-white'}`} />
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+            <div className="flex items-center gap-2 text-green-400">
+              <Upload className="w-5 h-5" />
+              <span className="font-medium">Smart Upload System</span>
             </div>
+          </motion.div>
 
-            {/* File Upload Zone */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <FileUploadZone
-                onFileSelect={handleFileSelect}
-                acceptedTypes={['.csv', '.xlsx', '.xls', '.json', '.txt']}
-                maxSize={50 * 1024 * 1024} // 50MB
-                maxFiles={5}
-                isUploading={uploadState.isUploading}
-              />
-            </motion.div>
-
-            {/* Agent Thinking Panel */}
-            {(uploadState.isUploading || agentThoughts.length > 0) && (
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Upload Section (2/3 width) */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* File Upload Zone with Prompt Selector */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="relative"
               >
-                <AgentThinkingPanel
-                  thoughts={agentThoughts}
-                  isActive={uploadState.isUploading}
-                  currentStage={uploadState.stage}
-                />
-              </motion.div>
-            )}
+                <div className="flex gap-4">
+                  {/* Upload Zone - Takes most space */}
+                  <div className="flex-1">
+                    <FileUploadZone
+                      onFileSelect={handleFileSelect}
+                      acceptedTypes={['.csv', '.xlsx', '.xls', '.json', '.txt', '.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg']}
+                      maxSize={100 * 1024 * 1024} // 100MB for larger files
+                      isUploading={uploadState.isUploading}
+                    />
+                  </div>
 
-            {/* Recent Files Table */}
-            <motion.div
-              className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <div className="p-6 border-b border-white/10">
-                <h3 className="text-lg font-semibold text-white">Recent Files</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-white/10">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-white">File Name</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-white">Type</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-white">Status</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-white">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/10">
-                    {dataFiles.slice(0, 3).map((file) => (
-                      <tr key={file.id} className="hover:bg-white/5 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <FileSpreadsheet className="w-5 h-5 text-green-400" />
-                            <span className="text-white font-medium">{file.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-white/70">{file.type}</td>
-                        <td className="px-6 py-4">
-                          <span className={`${file.statusColor} font-medium`}>{file.status}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <button className="w-8 h-8 rounded-lg bg-white/10 hover:bg-green-500 hover:text-black flex items-center justify-center transition-all duration-300">
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button className="w-8 h-8 rounded-lg bg-white/10 hover:bg-green-500 hover:text-black flex items-center justify-center transition-all duration-300">
-                              <Download className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* History Section - Right Column (40%) */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Upload History */}
-            <motion.div
-              className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <History className="w-5 h-5 text-green-400" />
-                  <h3 className="text-lg font-semibold text-white">Upload History</h3>
-                </div>
-                <button className="text-green-400 hover:text-green-300 text-sm transition-colors">
-                  View All
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                {uploadHistory.map((item) => (
-                  <div 
-                    key={item.id}
-                    className="bg-white/5 rounded-lg p-4 cursor-pointer hover:bg-white/10 transition-all duration-300"
-                    onClick={() => setSelectedHistoryItem(item)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-white font-medium text-sm truncate">
-                        {item.fileName}
-                      </span>
-                      <div className={`px-2 py-1 rounded-full text-xs ${
-                        item.status === 'success' ? 'bg-green-500/20 text-green-400' :
-                        item.status === 'processing' ? 'bg-yellow-500/20 text-yellow-400' :
-                        'bg-red-500/20 text-red-400'
-                      }`}>
-                        {item.status}
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between text-xs text-white/60 mb-2">
-                      <span>{(item.fileSize / 1024 / 1024).toFixed(1)} MB</span>
-                      <span>{item.recordCount.toLocaleString()} records</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-xs text-white/40">
-                      <span>{item.uploadDate.toLocaleDateString()}</span>
-                      <div className="flex items-center gap-1">
-                        <Database className="w-3 h-3" />
-                        <span>{item.storageLocation}</span>
-                      </div>
-                    </div>
-                    
-                    {item.aiSummary && (
-                      <div className="mt-2 text-xs text-green-400 italic">
-                        "AI: {item.aiSummary.substring(0, 60)}..."
+                  {/* Prompt Selector Button */}
+                  <div className="flex flex-col gap-2">
+                    <button
+                      className="w-12 h-12 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-xl flex items-center justify-center transition-all duration-300 group"
+                      title="Select Processing Prompt"
+                      onClick={() => setShowPromptSelector(true)}
+                    >
+                      <svg className="w-6 h-6 text-green-400 group-hover:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                    {selectedPrompt && (
+                      <div className="text-xs text-green-400 text-center max-w-12 truncate">
+                        {selectedPrompt.name}
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
-            </motion.div>
+                </div>
+              </motion.div>
 
-            {/* Quick Insights */}
-            <motion.div
-              className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <Brain className="w-5 h-5 text-green-400" />
-                <h3 className="text-lg font-semibold text-white">Quick Insights</h3>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="bg-white/5 rounded-lg p-4">
-                  <h4 className="text-white font-medium mb-2">Data Quality Score</h4>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 bg-white/10 rounded-full h-2">
-                      <div className="bg-green-400 h-2 rounded-full" style={{ width: '85%' }}></div>
-                    </div>
-                    <span className="text-green-400 font-semibold">85%</span>
-                  </div>
-                </div>
-                
-                <div className="bg-white/5 rounded-lg p-4">
-                  <h4 className="text-white font-medium mb-2">Storage Distribution</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-white/70">SQLite</span>
-                      <span className="text-white">67%</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-white/70">ChromaDB</span>
-                      <span className="text-white">33%</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-white/5 rounded-lg p-4">
-                  <h4 className="text-white font-medium mb-2">Recent Activity</h4>
-                  <p className="text-white/60 text-sm">3 files uploaded today</p>
-                  <p className="text-white/60 text-sm">2 classifications completed</p>
-                </div>
-              </div>
-            </motion.div>
+              {/* Progress Tracker */}
+              {uploadState.isUploading && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4 }}
+                >
+                  <ProgressTracker
+                    stages={progressStages}
+                    currentStage={uploadState.stage}
+                    overallProgress={uploadState.progress}
+                    estimatedTimeRemaining={estimatedTimeRemaining}
+                    onCancel={() => setUploadState(prev => ({ ...prev, isUploading: false }))}
+                  />
+                </motion.div>
+              )}
+
+              {/* Agent Thinking Panel */}
+              {agentThoughts.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.6 }}
+                >
+                  <AgentThinkingPanel
+                    thoughts={agentThoughts}
+                    isActive={uploadState.isUploading}
+                    currentStage={uploadState.stage}
+                  />
+                </motion.div>
+              )}
+            </div>
+
+            {/* Right Column - Upload History (1/3 width) */}
+            <div className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+              >
+                <UploadHistory
+                  items={uploadHistory}
+                  onItemClick={setSelectedHistoryItem}
+                />
+              </motion.div>
+            </div>
           </div>
+
+          {/* Prompt Selector Modal */}
+          <AnimatePresence>
+            {showPromptSelector && (
+              <motion.div
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowPromptSelector(false)}
+              >
+                <motion.div
+                  className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Modal Header */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-bold text-white">Select Processing Prompt</h3>
+                      <p className="text-white/60 text-sm">Choose how your data should be analyzed and classified</p>
+                    </div>
+                    <button
+                      onClick={() => setShowPromptSelector(false)}
+                      className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+
+                  {/* Search Bar */}
+                  <div className="relative mb-6">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <input
+                      type="text"
+                      placeholder="Search prompts..."
+                      className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-green-500/50"
+                    />
+                  </div>
+
+                  {/* Prompt Categories */}
+                  <div className="space-y-4">
+                    {['finance', 'customer', 'document', 'routing'].map((category) => {
+                      const categoryPrompts = availablePrompts.filter(p => p.category === category)
+                      if (categoryPrompts.length === 0) return null
+
+                      return (
+                        <div key={category}>
+                          <h4 className="text-green-400 font-medium mb-3 capitalize">{category} Prompts</h4>
+                          <div className="grid gap-3">
+                            {categoryPrompts.map((prompt) => (
+                              <motion.div
+                                key={prompt.id}
+                                className={`
+                                  p-4 rounded-lg border cursor-pointer transition-all duration-200
+                                  ${selectedPrompt?.id === prompt.id
+                                    ? 'bg-green-500/20 border-green-500/50'
+                                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                  }
+                                `}
+                                onClick={() => setSelectedPrompt(prompt)}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <h5 className="text-white font-medium">{prompt.name}</h5>
+                                  {selectedPrompt?.id === prompt.id && (
+                                    <CheckCircle className="w-5 h-5 text-green-400" />
+                                  )}
+                                </div>
+                                <p className="text-white/60 text-sm">{prompt.description}</p>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Modal Actions */}
+                  <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/10">
+                    <button
+                      onClick={() => {
+                        setSelectedPrompt(null)
+                        setShowPromptSelector(false)
+                      }}
+                      className="px-4 py-2 text-white/60 hover:text-white transition-colors"
+                    >
+                      Clear Selection
+                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setShowPromptSelector(false)}
+                        className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => setShowPromptSelector(false)}
+                        disabled={!selectedPrompt}
+                        className="px-6 py-2 bg-green-500 hover:bg-green-600 disabled:bg-green-500/50 text-black font-medium rounded-lg transition-colors disabled:cursor-not-allowed"
+                      >
+                        Apply Prompt
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

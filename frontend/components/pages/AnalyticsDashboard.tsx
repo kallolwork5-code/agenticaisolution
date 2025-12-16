@@ -131,7 +131,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ onBack }) => {
               <ArrowLeft className="w-5 h-5 text-white" />
             </button>
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Analytics Dashboard</h1>
+              <h1 className="text-4xl font-bold text-white mb-2">Dashboard</h1>
               <p className="text-white/60 text-lg">Comprehensive transaction analytics and insights</p>
             </div>
           </div>

@@ -39,19 +39,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check for existing authentication on mount
   useEffect(() => {
     const checkAuth = () => {
-      const token = localStorage.getItem('access_token')
-      const userData = localStorage.getItem('user')
-      
-      if (token && userData) {
-        try {
-          const parsedUser = JSON.parse(userData)
-          setUser(parsedUser)
-          setIsAuthenticated(true)
-        } catch (error) {
-          console.error('Error parsing user data:', error)
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
-          localStorage.removeItem('user')
+      // Only access localStorage in the browser
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('access_token')
+        const userData = localStorage.getItem('user')
+        
+        if (token && userData) {
+          try {
+            const parsedUser = JSON.parse(userData)
+            setUser(parsedUser)
+            setIsAuthenticated(true)
+          } catch (error) {
+            console.error('Error parsing user data:', error)
+            localStorage.removeItem('access_token')
+            localStorage.removeItem('refresh_token')
+            localStorage.removeItem('user')
+          }
         }
       }
       setLoading(false)
@@ -77,10 +80,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const data = await response.json()
       
-      // Store tokens and user data
-      localStorage.setItem('access_token', data.access_token)
-      localStorage.setItem('refresh_token', data.refresh_token)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      // Store tokens and user data (only in browser)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', data.access_token)
+        localStorage.setItem('refresh_token', data.refresh_token)
+        localStorage.setItem('user', JSON.stringify(data.user))
+      }
       
       setUser(data.user)
       setIsAuthenticated(true)
@@ -92,24 +97,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      const token = localStorage.getItem('access_token')
-      if (token) {
-        // Call logout endpoint
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        })
+      // Only access localStorage in the browser
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('access_token')
+        if (token) {
+          // Call logout endpoint
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          })
+        }
       }
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      // Clear local storage and state regardless of API call success
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
-      localStorage.removeItem('user')
+      // Clear local storage and state regardless of API call success (only in browser)
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        localStorage.removeItem('user')
+      }
       setIsAuthenticated(false)
       setUser(null)
     }

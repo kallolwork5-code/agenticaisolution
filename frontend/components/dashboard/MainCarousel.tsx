@@ -48,7 +48,7 @@ const MainCarousel: React.FC<MainCarouselProps> = ({ onNavigate }) => {
     },
     {
       id: 'dashboard',
-      title: 'Analytics Dashboard',
+      title: 'Dashboard',
       description: 'View comprehensive analytics, charts, and insights from transaction data and reconciliation metrics',
       icon: BarChart3,
       color: 'text-white',
@@ -86,10 +86,10 @@ const MainCarousel: React.FC<MainCarouselProps> = ({ onNavigate }) => {
           transition={{ duration: 0.6 }}
         >
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">
-            CollectiSense Dashboard
+            CollectiSense AI 
           </h1>
           <p className="text-xl text-white/70 mb-2">
-            Digital Reconciliation Platform
+            An AI Powered Digital collection  Platform
           </p>
           <p className="text-white/50">
             Choose a module to get started with your reconciliation workflow
