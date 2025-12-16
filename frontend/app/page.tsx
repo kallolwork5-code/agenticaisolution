@@ -1,20 +1,26 @@
 'use client'
 
-import { useAuth } from '@/lib/auth/AuthProvider'
+import { useAuth } from '@/lib/auth/AuthContext'
 import LoginPage from '@/components/auth/LoginPage'
 import Dashboard from '@/components/dashboard/Dashboard'
-import { useEffect } from 'react'
 
 export default function Home() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, login, logout, loading } = useAuth()
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-white">Loading...</p>
+        </div>
       </div>
     )
   }
 
-  return isAuthenticated ? <Dashboard /> : <LoginPage />
+  return isAuthenticated ? (
+    <Dashboard onLogout={logout} />
+  ) : (
+    <LoginPage onLogin={login} />
+  )
 }

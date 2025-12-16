@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { AuthProvider } from '@/lib/auth/AuthProvider'
+import { AuthProvider } from '@/lib/auth/AuthContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'CollectiSense AI',
-  description: 'Modernized AI-powered application for financial data management and analytics',
+  title: 'Agentic AI Dashboard',
+  description: 'Intelligent data processing pipeline with AI agents',
 }
 
 export default function RootLayout({

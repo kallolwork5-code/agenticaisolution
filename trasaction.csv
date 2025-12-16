@@ -1,5 +1,0 @@
-acquirer_name,merchant_id,transaction_date,settlement_date,card_number,card_classification,card_category,card_network,card_subtype,terminal_id,transaction_type,transaction_amount,transaction_currency,settlement_currency,gross_settlement_amount,mdr_percentage,mdr_amount
-Stripe,M123,2024-01-05,2024-01-06,411111******1111,CREDIT,CONSUMER,VISA,CLASSIC,T001,SALE,1200.50,INR,INR,1176.49,2.00,24.01
-Razorpay,M123,2024-01-05,2024-01-07,510510******5100,DEBIT,CONSUMER,MASTERCARD,STANDARD,T002,SALE,560.00,INR,INR,548.24,2.10,11.76
-PayU,M124,2024-01-06,2024-01-08,607384******0000,DEBIT,CONSUMER,RUPAY,CLASSIC,T003,SALE,999.99,INR,INR,994.99,0.50,5.00
-Stripe,M125,2024-01-06,2024-01-07,411111******2222,CREDIT,CORPORATE,VISA,PLATINUM,T001,REFUND,-250.00,INR,INR,-245.00,2.00,-5.00

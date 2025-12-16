@@ -35,7 +35,8 @@
   - Write tests for decision display and user-friendly explanation formatting
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [x] 4. Create data flow animation system
+- [ ] 4. Create data flow animation system
+
 
 
 
@@ -52,7 +53,8 @@
 
 
 
-- [x] 5. Build progress tracking and time estimation
+- [ ] 5. Build progress tracking and time estimation
+
 
 
 
