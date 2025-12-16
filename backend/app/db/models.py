@@ -7,7 +7,7 @@ Design decision:
 - Versioning is explicit, not automatic
 """
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, UniqueConstraint,Date,Float
 from datetime import datetime
 from app.db.database import Base
 
@@ -37,3 +37,42 @@ class Prompt(Base):
             name="uq_agent_role_prompt_type"
         ),
     )
+
+
+"""
+SQLAlchemy model for acquirer transaction data.
+
+Purpose:
+- Store immutable transaction records
+- Used for reconciliation and audit
+"""
+
+
+class AcquirerTransaction(Base):
+    __tablename__ = "acquirer_transactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    acquirer_name = Column(String, index=True)
+    merchant_id = Column(String, index=True)
+
+    transaction_date = Column(Date)
+    settlement_date = Column(Date)
+
+    card_number = Column(String)
+    card_classification = Column(String)
+    card_category = Column(String)
+    card_network = Column(String)
+    card_subtype = Column(String)
+
+    terminal_id = Column(String, index=True)
+    transaction_type = Column(String)
+
+    transaction_amount = Column(Float)
+    transaction_currency = Column(String)
+
+    settlement_currency = Column(String)
+    gross_settlement_amount = Column(Float)
+
+    mdr_percentage = Column(Float)
+    mdr_amount = Column(Float)

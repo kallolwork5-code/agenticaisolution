@@ -1,0 +1,5 @@
+acquirer,terminal_id,payment_mode,card_classification,network,card_category,transaction_amount_min,transaction_amount_max,agreed_mdr_rate,applicable_sla_days,interest_rate_sla_delay
+Stripe,T001,CARD,CREDIT,VISA,CONSUMER,0,2000,2.00,2,18.0
+Stripe,T001,CARD,CREDIT,VISA,CORPORATE,0,5000,2.30,2,18.0
+Razorpay,T002,CARD,DEBIT,MASTERCARD,CONSUMER,0,3000,2.10,3,20.0
+PayU,T003,CARD,DEBIT,RUPAY,CONSUMER,0,5000,0.50,4,15.0

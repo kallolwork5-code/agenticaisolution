@@ -1,0 +1,5 @@
+acquirer_name,terminal_id,transaction_date,transaction_amount,payment_mode,card_classification,network
+Bank A,T001,2024-01-01,100.50,Credit,Premium,Visa
+Bank B,T002,2024-01-02,250.75,Debit,Standard,Mastercard
+Bank C,T003,2024-01-03,75.25,Credit,Premium,Visa
+Bank A,T004,2024-01-04,300.00,Credit,Corporate,Amex

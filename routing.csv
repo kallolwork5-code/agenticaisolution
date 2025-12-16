@@ -1,0 +1,5 @@
+terminal_id,payment_method,card_classification,network,primary_acquirer,secondary_acquirer
+T001,CARD,CREDIT,VISA,Stripe,Razorpay
+T002,CARD,DEBIT,MASTERCARD,Razorpay,Stripe
+T003,CARD,DEBIT,RUPAY,PayU,Stripe
+T004,UPI,NA,NA,PayU,Razorpay
