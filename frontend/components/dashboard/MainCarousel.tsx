@@ -7,6 +7,7 @@ import {
   Database, 
   Brain, 
   MessageCircle,
+  BarChart3,
   ArrowRight,
   Zap
 } from 'lucide-react'
@@ -46,12 +47,21 @@ const MainCarousel: React.FC<MainCarouselProps> = ({ onNavigate }) => {
       onClick: () => onNavigate('data')
     },
     {
+      id: 'dashboard',
+      title: 'Analytics Dashboard',
+      description: 'View comprehensive analytics, charts, and insights from transaction data and reconciliation metrics',
+      icon: BarChart3,
+      color: 'text-white',
+      gradient: 'from-green-600 to-green-700',
+      onClick: () => onNavigate('dashboard')
+    },
+    {
       id: 'ai-engine',
       title: 'AI Engine',
       description: 'Monitor and configure AI agents for SLA processing, MDR calculations, and routing logic',
       icon: Brain,
-      color: 'text-white',
-      gradient: 'from-green-600 to-green-700',
+      color: 'text-green-300',
+      gradient: 'from-green-500 to-green-600',
       onClick: () => onNavigate('ai-engine')
     },
     {
@@ -136,37 +146,7 @@ const MainCarousel: React.FC<MainCarouselProps> = ({ onNavigate }) => {
           ))}
         </div>
 
-        {/* Quick Stats */}
-        <motion.div
-          className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white/60 text-sm">Active Transactions</p>
-                <p className="text-2xl font-bold text-white">1,247</p>
-              </div>
-              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
-                <Database className="w-6 h-6 text-black" />
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white/60 text-sm">Processing Speed</p>
-                <p className="text-2xl font-bold text-white">98.5%</p>
-              </div>
-              <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </div>
   )

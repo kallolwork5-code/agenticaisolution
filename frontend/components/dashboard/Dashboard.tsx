@@ -5,6 +5,7 @@ import { LogOut, User, Bell, Settings } from 'lucide-react'
 import MainCarousel from './MainCarousel'
 import PromptRepository from '../pages/PromptRepository'
 import DataManagement from '../pages/DataManagement'
+import AnalyticsDashboard from '../pages/AnalyticsDashboard'
 import AIEngine from '../pages/AIEngine'
 import Chatbot from '../pages/Chatbot'
 
@@ -12,7 +13,7 @@ interface DashboardProps {
   onLogout: () => void
 }
 
-type PageType = 'carousel' | 'prompts' | 'data' | 'ai-engine' | 'chatbot'
+type PageType = 'carousel' | 'prompts' | 'data' | 'dashboard' | 'ai-engine' | 'chatbot'
 
 const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [currentPage, setCurrentPage] = useState<PageType>('carousel')
@@ -31,6 +32,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         return <PromptRepository onBack={handleBack} />
       case 'data':
         return <DataManagement onBack={handleBack} />
+      case 'dashboard':
+        return <AnalyticsDashboard onBack={handleBack} />
       case 'ai-engine':
         return <AIEngine onBack={handleBack} />
       case 'chatbot':
@@ -54,7 +57,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             <h1 className="text-2xl font-bold text-white">CollectiSense</h1>
             <span className="text-gray-400">Digital Reconciliation Platform</span>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <button className="p-2 text-gray-400 hover:text-white transition-colors">
               <Bell className="w-5 h-5" />

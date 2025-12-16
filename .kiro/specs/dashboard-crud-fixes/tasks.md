@@ -12,7 +12,10 @@
   - Test that all CRUD operations work correctly after the changes
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 3.1, 3.3_
 
-- [ ] 2. Remove SLA Compliance metric from dashboard
+- [x] 2. Remove SLA Compliance metric from dashboard
+
+
+
   - Modify MainCarousel.tsx to remove the third stat card (SLA Compliance)
   - Update the stats grid layout from "grid-cols-1 md:grid-cols-3" to "grid-cols-1 md:grid-cols-2"
   - Ensure the remaining two stats (Active Transactions and Processing Speed) maintain proper spacing
