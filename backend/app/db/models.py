@@ -76,3 +76,34 @@ class AcquirerTransaction(Base):
 
     mdr_percentage = Column(Float)
     mdr_amount = Column(Float)
+
+
+class Upload(Base):
+    """
+    Database model for file uploads with AI classification and insights
+    """
+    __tablename__ = "uploads"
+
+    id = Column(String, primary_key=True)
+    file_name = Column(String, nullable=False)
+    file_size = Column(Integer, nullable=False)
+    upload_date = Column(DateTime, default=datetime.utcnow)
+    
+    # AI Classification results
+    classification = Column(String, nullable=False)
+    storage_location = Column(String, nullable=False)  # 'sqlite' or 'chromadb'
+    confidence = Column(Float, nullable=False)
+    method = Column(String, nullable=False)  # 'ai_prompt', 'rule_based', 'fallback'
+    reasoning = Column(Text)
+    
+    # File metadata
+    record_count = Column(Integer)
+    status = Column(String, nullable=False)  # 'success', 'processing', 'failed'
+    
+    # AI-generated content
+    ai_summary = Column(Text)
+    ai_insights = Column(Text)  # JSON string of insights array
+    
+    # Processing metadata
+    processing_time = Column(Float)  # seconds
+    prompt_used = Column(String)  # which prompt was used for classification

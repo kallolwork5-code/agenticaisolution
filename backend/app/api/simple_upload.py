@@ -93,32 +93,7 @@ async def simple_upload_file(
         logger.error(f"Simple upload failed for {file.filename}: {e}")
         raise HTTPException(500, f"Upload failed: {str(e)}")
 
-@router.get("/upload/history")
-async def get_upload_history(
-    skip: int = 0,
-    limit: int = 20,
-    db: Session = Depends(get_db)
-):
-    """Get upload history for the current user"""
-    
-    files = db.query(UploadedFile).order_by(UploadedFile.upload_timestamp.desc()).offset(skip).limit(limit).all()
-    
-    # Convert to frontend format
-    history_items = []
-    for f in files:
-        history_items.append({
-            "id": f.id,
-            "fileName": f.file_name or f.original_name,
-            "fileSize": f.file_size or 0,
-            "uploadDate": f.upload_timestamp.isoformat() if f.upload_timestamp else datetime.now().isoformat(),
-            "classification": f.data_type or "Unknown",
-            "storageLocation": "sqlite" if f.data_type in ["Transaction Data", "Rate Card"] else "chromadb",
-            "recordCount": f.processed_records or 0,
-            "status": "success" if f.status == "completed" else f.status,
-            "aiSummary": f"Processed {f.processed_records or 0} records with {f.classification_confidence or 0:.0%} confidence" if f.processed_records else None
-        })
-    
-    return history_items
+# Removed conflicting upload history endpoint - now using real data from upload.py
 
 # Mock endpoints for agent thinking display
 @router.post("/prompts/analysis")

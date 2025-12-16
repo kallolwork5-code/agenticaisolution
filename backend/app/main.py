@@ -21,6 +21,8 @@ from app.api.ai_engine import router as ai_engine_router
 from app.api.schema_management import router as schema_router
 from app.api.websocket import router as websocket_router
 from app.api.insights import router as insights_router
+from app.api.upload import router as upload_router
+from app.api.classification import router as classification_router
 from app.db.database import engine
 from app.db import models
 from app.models.user import User
@@ -51,6 +53,8 @@ app.include_router(ai_engine_router)
 app.include_router(schema_router)
 app.include_router(websocket_router)
 app.include_router(insights_router, prefix="/api")
+app.include_router(upload_router, prefix="/api/upload")
+app.include_router(classification_router, prefix="/api/classification")
 
 @app.get("/health")
 def health():
