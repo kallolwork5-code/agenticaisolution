@@ -71,6 +71,7 @@
 - [ ] 8. Replace CSS-based bar charts with Recharts components
   - Replace acquirer performance chart with InteractiveBarChart
 
+
   - Replace settlement period chart with InteractiveBarChart
   - Replace currency ranges chart with InteractiveBarChart
   - Remove old CSS-based BarChart component
