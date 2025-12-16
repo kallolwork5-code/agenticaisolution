@@ -17,6 +17,7 @@ export interface PieChartData {
   name: string
   value: number
   fill: string
+  [key: string]: any
 }
 
 export interface TrendData {
