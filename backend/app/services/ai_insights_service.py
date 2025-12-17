@@ -24,25 +24,32 @@ logger = logging.getLogger("ai-insights")
 
 class AIInsightsService:
     def __init__(self):
-        """Initialize the AI Insights Service with LangChain components"""
-        self.llm = None
-        
-        # Initialize LLM if API key is available
-        try:
-            openai_key = os.getenv("OPENAI_API_KEY")
-            if openai_key and openai_key.strip():
-                self.llm = ChatOpenAI(
-                    api_key=openai_key,
-                    model="gpt-4o-mini",
-                    temperature=0.3,
-                    max_tokens=1000
-                )
-                logger.info("AI Insights Service initialized with OpenAI LLM")
-            else:
-                logger.warning("OpenAI API key not found. Using mock insights.")
-        except Exception as e:
-            logger.error(f"Failed to initialize LLM: {e}")
-            self.llm = None
+        """Initialize the AI Insights Service with lazy LLM initialization"""
+        self._llm = None
+        self._llm_initialized = False
+    
+    @property
+    def llm(self):
+        """Lazy initialization of LLM"""
+        if not self._llm_initialized:
+            self._llm_initialized = True
+            try:
+                openai_key = os.getenv("OPENAI_API_KEY")
+                if openai_key and openai_key.strip():
+                    self._llm = ChatOpenAI(
+                        api_key=openai_key,
+                        model="gpt-4o-mini",
+                        temperature=0.3,
+                        max_tokens=1000
+                    )
+                    logger.info("AI Insights Service initialized with OpenAI LLM")
+                else:
+                    logger.warning("OpenAI API key not found. Using mock insights.")
+                    self._llm = None
+            except Exception as e:
+                logger.error(f"Failed to initialize LLM: {e}")
+                self._llm = None
+        return self._llm
 
     async def generate_classification_thoughts(self, 
                                             file_content: str, 

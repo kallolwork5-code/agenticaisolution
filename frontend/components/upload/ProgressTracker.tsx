@@ -30,6 +30,7 @@ interface ProgressTrackerProps {
   estimatedTimeRemaining?: number
   onCancel?: () => void
   className?: string
+  isCancelling?: boolean
 }
 
 const ProgressTracker: React.FC<ProgressTrackerProps> = ({
@@ -38,7 +39,8 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   overallProgress,
   estimatedTimeRemaining,
   onCancel,
-  className = ''
+  className = '',
+  isCancelling = false
 }) => {
   // Get stage icon
   const getStageIcon = (stageId: string) => {
@@ -85,26 +87,59 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-white font-semibold text-lg">Upload Progress</h3>
-          <p className="text-white/60 text-sm">Processing your data file</p>
+          <h3 className="text-white font-semibold text-lg">
+            {isCancelling ? 'Cancelling Upload...' : 'Upload Progress'}
+          </h3>
+          <p className="text-white/60 text-sm">
+            {isCancelling ? 'Stopping current operations' : 'Processing your data file'}
+          </p>
         </div>
         
         <div className="flex items-center gap-4">
-          {estimatedTimeRemaining && estimatedTimeRemaining > 0 && (
-            <div className="text-right">
+          {estimatedTimeRemaining && estimatedTimeRemaining > 0 && !isCancelling && (
+            <motion.div 
+              className="text-right"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
               <p className="text-white/60 text-xs">Time remaining</p>
               <p className="text-white font-medium">{formatTimeRemaining(estimatedTimeRemaining)}</p>
-            </div>
+            </motion.div>
           )}
           
-          {onCancel && (
-            <button
+          {isCancelling && (
+            <motion.div 
+              className="text-right"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <p className="text-red-400 text-xs">Cancelling...</p>
+              <p className="text-red-400 font-medium">Please wait</p>
+            </motion.div>
+          )}
+          
+          {onCancel && !isCancelling && (
+            <motion.button
               onClick={onCancel}
               className="w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white flex items-center justify-center transition-all duration-200"
               title="Cancel upload"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <X className="w-4 h-4" />
-            </button>
+            </motion.button>
+          )}
+          
+          {isCancelling && (
+            <motion.div
+              className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <Clock className="w-4 h-4" />
+            </motion.div>
           )}
         </div>
       </div>

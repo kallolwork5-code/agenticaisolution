@@ -32,12 +32,20 @@ from app.utils.file_parsers import parse_csv, parse_excel, parse_json, parse_pdf
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["enhanced-upload"])
 
-# Build the ingestion graph
-try:
-    ingestion_graph = build_ingestion_graph()
-except Exception as e:
-    logger.warning(f"Could not build ingestion graph: {e}")
-    ingestion_graph = None
+# Lazy initialization of ingestion graph
+ingestion_graph = None
+
+def get_ingestion_graph():
+    """Get ingestion graph with lazy initialization"""
+    global ingestion_graph
+    if ingestion_graph is None:
+        try:
+            ingestion_graph = build_ingestion_graph()
+            logger.info("Ingestion graph initialized on first use")
+        except Exception as e:
+            logger.warning(f"Could not build ingestion graph: {e}")
+            ingestion_graph = None
+    return ingestion_graph
 
 class EnhancedFileProcessor:
     """Enhanced file processor with deduplication and real-time updates"""

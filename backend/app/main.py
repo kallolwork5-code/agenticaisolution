@@ -17,7 +17,7 @@ from app.api.auth import router as auth_router
 from app.api.users import router as users_router
 # from app.api.file_upload import router as file_upload_router
 from app.api.simple_upload import router as simple_upload_router
-from app.api.ai_engine import router as ai_engine_router
+from app.api.ai_workflows import router as ai_workflows_router
 from app.api.schema_management import router as schema_router
 from app.api.websocket import router as websocket_router
 from app.api.insights import router as insights_router
@@ -49,7 +49,7 @@ app.include_router(ingest_router, prefix="/api")
 app.include_router(prompt_router, prefix="/api")
 # app.include_router(file_upload_router)
 app.include_router(simple_upload_router)
-app.include_router(ai_engine_router)
+app.include_router(ai_workflows_router)
 app.include_router(schema_router)
 app.include_router(websocket_router)
 app.include_router(insights_router, prefix="/api")

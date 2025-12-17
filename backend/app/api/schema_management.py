@@ -16,8 +16,16 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/schemas", tags=["schema-management"])
 
-# Initialize agents
-ingestion_agent = DataIngestionAgent()
+# Lazy initialization of agents
+_ingestion_agent = None
+
+def get_ingestion_agent():
+    """Get ingestion agent with lazy initialization"""
+    global _ingestion_agent
+    if _ingestion_agent is None:
+        _ingestion_agent = DataIngestionAgent()
+        logger.info("DataIngestionAgent initialized on first use")
+    return _ingestion_agent
 
 @router.get("/list")
 async def list_schemas(db: Session = Depends(get_db)):
@@ -65,6 +73,7 @@ async def list_schemas(db: Session = Depends(get_db)):
         schemas_list = []
         for table_name, schema_info in schema_groups.items():
             # Get actual table info from SQLite
+            ingestion_agent = get_ingestion_agent()
             table_info = ingestion_agent.get_table_info(table_name)
             
             schema_info.update({
@@ -94,6 +103,7 @@ async def list_schemas(db: Session = Depends(get_db)):
 async def get_table_preview(table_name: str, limit: int = 10):
     """Get a preview of data from a specific table"""
     try:
+        ingestion_agent = get_ingestion_agent()
         table_data = ingestion_agent.get_table_data(table_name, limit=limit, offset=0)
         
         if 'error' in table_data:
@@ -212,6 +222,7 @@ async def generate_summary_background(file_id: str, file_record: UploadedFile):
         # Get sample data if available
         if file_record.table_name:
             try:
+                ingestion_agent = get_ingestion_agent()
                 sample_data = ingestion_agent.get_table_data(file_record.table_name, limit=5)
                 analysis_data['sample_data'] = sample_data.get('data', [])
                 analysis_data['columns'] = sample_data.get('columns', [])

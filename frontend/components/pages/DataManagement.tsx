@@ -47,7 +47,20 @@ interface AgentThought {
     ruleApplied?: string
     dataPoints?: number
     processingTime?: number
+    stageIndex?: number
+    totalStages?: number
+    fileSize?: number
+    promptId?: string
+    category?: string
   }
+}
+
+interface DataInsight {
+  type: 'pattern' | 'quality' | 'recommendation' | 'anomaly'
+  title: string
+  description: string
+  confidence: number
+  actionable: boolean
 }
 
 interface UploadHistoryItem {
@@ -60,6 +73,7 @@ interface UploadHistoryItem {
   recordCount: number
   status: 'success' | 'failed' | 'processing'
   aiSummary?: string
+  insights?: DataInsight[]
 }
 
 const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
@@ -76,6 +90,8 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
   const [, setSelectedHistoryItem] = useState<UploadHistoryItem | null>(null)
   const [progressStages, setProgressStages] = useState<ProgressStage[]>([])
   const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<number>(0)
+  const [uploadStartTime, setUploadStartTime] = useState<Date | null>(null)
+  const [isCancelling, setIsCancelling] = useState(false)
 
   // Prompt selector state
   const [showPromptSelector, setShowPromptSelector] = useState(false)
@@ -106,75 +122,16 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
     )
   }
 
-  // Handle file selection
-  const handleFileSelect = (files: FileList) => {
-    if (files.length === 0) return
+  // Calculate estimated time remaining
+  const calculateEstimatedTime = useCallback((currentProgress: number, startTime: Date) => {
+    if (currentProgress <= 0) return 0
 
-    const file = files[0] // Take the first file
-    setUploadState({
-      isUploading: true,
-      currentFile: file,
-      progress: 0,
-      stage: 'upload',
-      error: null
-    })
+    const elapsedTime = (Date.now() - startTime.getTime()) / 1000 // in seconds
+    const progressRate = currentProgress / elapsedTime // progress per second
+    const remainingProgress = 100 - currentProgress
 
-    // Initialize progress tracking
-    initializeProgressStages()
-
-    // Start upload simulation
-    simulateUploadProcess(file)
-  }
-
-  // Simulate upload process with stages
-  const simulateUploadProcess = async (file: File) => {
-    const stages = ['upload', 'analyze', 'classify', 'store', 'complete']
-
-    for (let i = 0; i < stages.length; i++) {
-      const stage = stages[i]
-
-      // Update stage to active
-      updateProgressStage(stage, {
-        status: 'active',
-        startTime: new Date(),
-        progress: 0
-      })
-
-      // Add agent thoughts for this stage
-      addAgentThought('analysis', `Starting ${stage} phase for ${file.name}`, 0.9)
-
-      // Simulate progress for this stage
-      for (let progress = 0; progress <= 100; progress += 10) {
-        await new Promise(resolve => setTimeout(resolve, 200))
-        updateProgressStage(stage, { progress })
-
-        // Update overall progress
-        const overallProgress = ((i * 100) + progress) / stages.length
-        setUploadState(prev => ({ ...prev, progress: overallProgress }))
-      }
-
-      // Mark stage as completed
-      updateProgressStage(stage, {
-        status: 'completed',
-        progress: 100,
-        endTime: new Date()
-      })
-
-      // Add completion thought
-      addAgentThought('decision', `${stage} phase completed successfully`, 0.95)
-    }
-
-    // Final completion
-    setUploadState(prev => ({
-      ...prev,
-      isUploading: false,
-      stage: 'complete',
-      progress: 100
-    }))
-
-    // Reload upload history
-    loadUploadHistory()
-  }
+    return remainingProgress / progressRate
+  }, [])
 
   // Add agent thought
   const addAgentThought = useCallback((type: AgentThought['type'], content: string, confidence: number, metadata?: AgentThought['metadata']) => {
@@ -190,13 +147,329 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
     setAgentThoughts(prev => [...prev, newThought])
   }, [])
 
+  // Handle upload cancellation
+  const handleCancelUpload = useCallback(() => {
+    setIsCancelling(true)
+
+    // Mark current active stage as error
+    setProgressStages(prev =>
+      prev.map(stage =>
+        stage.status === 'active'
+          ? { ...stage, status: 'error', error: 'Upload cancelled by user' }
+          : stage
+      )
+    )
+
+    // Reset upload state
+    setTimeout(() => {
+      setUploadState({
+        isUploading: false,
+        currentFile: null,
+        progress: 0,
+        stage: 'upload',
+        error: 'Upload cancelled'
+      })
+      setIsCancelling(false)
+      setUploadStartTime(null)
+      setEstimatedTimeRemaining(0)
+
+      // Add cancellation thought
+      addAgentThought('decision', 'Upload process cancelled by user', 0.0, {
+        processingTime: uploadStartTime ? Date.now() - uploadStartTime.getTime() : 0
+      })
+    }, 1000)
+  }, [uploadStartTime, addAgentThought])
+
+  // Handle file selection
+  const handleFileSelect = (files: FileList) => {
+    if (files.length === 0) return
+
+    const file = files[0] // Take the first file
+    const startTime = new Date()
+
+    setUploadState({
+      isUploading: true,
+      currentFile: file,
+      progress: 0,
+      stage: 'upload',
+      error: null
+    })
+
+    setUploadStartTime(startTime)
+    setIsCancelling(false)
+    setEstimatedTimeRemaining(0)
+
+    // Initialize progress tracking
+    initializeProgressStages()
+
+    // Clear previous agent thoughts
+    setAgentThoughts([])
+
+    // Add initial agent thought about the selected prompt
+    if (selectedPrompt) {
+      addAgentThought('prompt', 
+        `Selected prompt: ${selectedPrompt.name} - ${selectedPrompt.description}`, 
+        0.95,
+        { promptId: selectedPrompt.id, category: selectedPrompt.category }
+      )
+    }
+
+    // Start real upload process with backend integration
+    processUploadWithBackend(file, startTime)
+  }
+
+  // Real upload process with backend integration
+  const processUploadWithBackend = async (file: File, startTime: Date) => {
+    let wsConnected = false
+    let ws: WebSocket | null = null
+    
+    try {
+      // Try to connect to WebSocket for real-time updates (optional)
+      ws = new WebSocket('ws://localhost:8000/api/upload/ws/upload')
+      
+      ws.onopen = () => {
+        wsConnected = true
+        console.log('WebSocket connected for real-time updates')
+      }
+      
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data)
+        
+        if (data.type === 'progress') {
+          // Update progress stage
+          updateProgressStage(data.stage, {
+            status: 'active',
+            progress: data.progress,
+            startTime: new Date()
+          })
+          
+          // Update overall progress
+          setUploadState(prev => ({ 
+            ...prev, 
+            progress: data.progress,
+            stage: data.stage as any
+          }))
+          
+          // Calculate estimated time remaining
+          if (data.progress > 0) {
+            const estimatedTime = calculateEstimatedTime(data.progress, startTime)
+            setEstimatedTimeRemaining(estimatedTime)
+          }
+          
+        } else if (data.type === 'agent_thought') {
+          // Add real agent thinking update from backend
+          addAgentThought(
+            data.thought_type as any,
+            data.content,
+            data.confidence,
+            data.metadata
+          )
+        }
+      }
+      
+      ws.onerror = (error) => {
+        console.warn('WebSocket error (will continue without real-time updates):', error)
+        wsConnected = false
+      }
+      
+      // Wait a moment for WebSocket to connect, but don't block the upload
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+    } catch (error) {
+      console.warn('WebSocket connection failed (will continue without real-time updates):', error)
+      wsConnected = false
+    }
+    
+    // Always upload the file via HTTP POST (regardless of WebSocket status)
+    try {
+      // If no WebSocket, show manual progress updates
+      if (!wsConnected) {
+        addAgentThought('analysis', `Starting upload process for ${file.name}`, 0.9)
+        updateProgressStage('upload', { status: 'active', progress: 20, startTime: new Date() })
+      }
+      
+      // Upload file to backend
+      const formData = new FormData()
+      formData.append('file', file)
+      if (selectedPrompt) {
+        formData.append('prompt_id', selectedPrompt.id.toString())
+      }
+      
+      const response = await fetch('http://localhost:8000/api/upload/process', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (response.ok) {
+        const result = await response.json()
+        
+        // If no WebSocket, show manual completion
+        if (!wsConnected) {
+          addAgentThought('decision', `File classified as ${result.classification} with ${(result.confidence * 100).toFixed(0)}% confidence`, result.confidence)
+          
+          // Mark all stages as completed
+          const stages = ['upload', 'analyze', 'classify', 'store', 'complete']
+          stages.forEach((stage, index) => {
+            updateProgressStage(stage, {
+              status: 'completed',
+              progress: 100,
+              endTime: new Date()
+            })
+          })
+        }
+        
+        // Final completion
+        setUploadState(prev => ({ 
+          ...prev, 
+          isUploading: false, 
+          stage: 'complete',
+          progress: 100 
+        }))
+        
+        // Reset time tracking
+        setEstimatedTimeRemaining(0)
+        setUploadStartTime(null)
+        
+        // Add final success thought
+        addAgentThought('decision', `Upload completed successfully! File stored in ${result.storage_location.toUpperCase()} with ${result.record_count} records.`, 0.95)
+        
+        // Reload upload history to show the new upload
+        await loadUploadHistory()
+        
+      } else {
+        throw new Error(`Upload failed: ${response.status} ${response.statusText}`)
+      }
+      
+    } catch (error) {
+      console.error('Upload error:', error)
+      addAgentThought('analysis', `Upload failed: ${error}`, 0.1)
+      
+      setUploadState(prev => ({ 
+        ...prev, 
+        isUploading: false, 
+        error: error instanceof Error ? error.message : 'Upload failed'
+      }))
+    } finally {
+      // Close WebSocket if it was opened
+      if (ws) {
+        ws.close()
+      }
+    }
+  }
+  
+  // Fallback simulation for when backend is not available
+  const simulateUploadProcess = async (file: File, startTime: Date) => {
+    const stages = ['upload', 'analyze', 'classify', 'store', 'complete']
+    
+    for (let i = 0; i < stages.length; i++) {
+      const stage = stages[i]
+      
+      // Update stage to active
+      updateProgressStage(stage, { 
+        status: 'active', 
+        startTime: new Date(),
+        progress: 0 
+      })
+
+      // Add agent thoughts for this stage
+      if (stage === 'classify') {
+        addAgentThought('prompt', `Using ${selectedPrompt?.name || 'default'} prompt for classification`, 0.9)
+        addAgentThought('rule', 'Checking rule-based classification patterns...', 0.8)
+        addAgentThought('decision', `Classified as ${getFileTypeFromName(file.name)} based on file structure`, 0.85)
+      } else {
+        addAgentThought('analysis', `Starting ${stage} phase for ${file.name}`, 0.9)
+      }
+
+      // Simulate progress for this stage
+      for (let progress = 0; progress <= 100; progress += 10) {
+        await new Promise(resolve => setTimeout(resolve, 200))
+        updateProgressStage(stage, { progress })
+        
+        // Update overall progress
+        const overallProgress = ((i * 100) + progress) / stages.length
+        setUploadState(prev => ({ ...prev, progress: overallProgress }))
+        
+        // Calculate estimated time remaining
+        if (overallProgress > 0) {
+          const estimatedTime = calculateEstimatedTime(overallProgress, startTime)
+          setEstimatedTimeRemaining(estimatedTime)
+        }
+      }
+
+      // Mark stage as completed
+      updateProgressStage(stage, { 
+        status: 'completed', 
+        progress: 100,
+        endTime: new Date()
+      })
+      
+      // Add completion thought
+      addAgentThought('decision', `${stage} phase completed successfully`, 0.95)
+    }
+
+    // Final completion
+    setUploadState(prev => ({ 
+      ...prev, 
+      isUploading: false, 
+      stage: 'complete',
+      progress: 100 
+    }))
+
+    // Reset time tracking
+    setEstimatedTimeRemaining(0)
+    setUploadStartTime(null)
+
+    // Reload upload history
+    loadUploadHistory()
+  }
+  
+  // Helper function to determine file type from name
+  const getFileTypeFromName = (fileName: string): string => {
+    if (fileName.includes('transaction') || fileName.includes('payment')) return 'Transaction Data'
+    if (fileName.includes('rate') || fileName.includes('mdr')) return 'Rate Card Data'
+    if (fileName.includes('route') || fileName.includes('routing')) return 'Routing Data'
+    if (fileName.includes('customer') || fileName.includes('user')) return 'Customer Data'
+    return 'Document Data'
+  }
+
+
+
   // Load upload history from database
   const loadUploadHistory = useCallback(async () => {
     try {
-      const response = await fetch('/api/upload/history')
+      const response = await fetch('http://localhost:8000/api/upload/history')
       if (response.ok) {
         const history = await response.json()
-        setUploadHistory(history)
+        // Convert uploadDate strings to Date objects and parse aiInsights
+        const processedHistory = history.map((item: any) => {
+          let insights: DataInsight[] | undefined = undefined
+          
+          // Parse aiInsights - it's a list with description containing JSON
+          if (item.aiInsights && Array.isArray(item.aiInsights) && item.aiInsights.length > 0) {
+            const firstInsight = item.aiInsights[0]
+            if (firstInsight.description && firstInsight.description.includes('```json')) {
+              try {
+                // Extract JSON from markdown code block
+                const desc = firstInsight.description
+                const jsonStart = desc.indexOf('[')
+                const jsonEnd = desc.lastIndexOf(']') + 1
+                if (jsonStart !== -1 && jsonEnd !== -1) {
+                  const jsonStr = desc.substring(jsonStart, jsonEnd)
+                  insights = JSON.parse(jsonStr)
+                }
+              } catch (error) {
+                console.error('Failed to parse aiInsights JSON:', error)
+              }
+            }
+          }
+          
+          return {
+            ...item,
+            uploadDate: new Date(item.uploadDate),
+            insights
+          }
+        })
+        setUploadHistory(processedHistory)
       } else {
         // Fallback to mock data if API doesn't exist yet
         const mockHistory: UploadHistoryItem[] = [
@@ -354,7 +627,8 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
                     currentStage={uploadState.stage}
                     overallProgress={uploadState.progress}
                     estimatedTimeRemaining={estimatedTimeRemaining}
-                    onCancel={() => setUploadState(prev => ({ ...prev, isUploading: false }))}
+                    onCancel={handleCancelUpload}
+                    isCancelling={isCancelling}
                   />
                 </motion.div>
               )}

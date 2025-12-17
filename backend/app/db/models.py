@@ -39,6 +39,25 @@ class Prompt(Base):
     )
 
 
+class AgentResult(Base):
+    __tablename__ = "agent_results"
+    
+    id = Column(Integer, primary_key=True)
+    agent_name = Column(String, nullable=False)
+    execution_date = Column(Date, nullable=False)
+    workflow_id = Column(String, nullable=True)
+    
+    # Key metrics for dashboard
+    status = Column(String, nullable=False)
+    execution_time_seconds = Column(Float, nullable=True)
+    records_processed = Column(Integer, nullable=True)
+    insights_generated = Column(Integer, nullable=True)
+    
+    # Full result data
+    result_data = Column(Text, nullable=True)  # JSON string
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 """
 SQLAlchemy model for acquirer transaction data.
 
@@ -107,3 +126,37 @@ class Upload(Base):
     # Processing metadata
     processing_time = Column(Float)  # seconds
     prompt_used = Column(String)  # which prompt was used for classification
+
+
+class WorkflowExecution(Base):
+    """
+    Database model for AI workflow executions
+    """
+    __tablename__ = "workflow_executions"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    workflow_id = Column(String, unique=True, nullable=False)
+    name = Column(String, nullable=False)
+    status = Column(String, nullable=False)  # 'pending', 'running', 'completed', 'failed', 'cancelled'
+    execution_date = Column(Date, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    agents_executed = Column(Text)  # JSON string of agent names
+    parameters = Column(Text)  # JSON string of parameters
+    summary = Column(Text)  # JSON string of execution summary
+    error_message = Column(Text)
+
+
+class WorkflowResult(Base):
+    """
+    Database model for individual agent results within workflows
+    """
+    __tablename__ = "workflow_results"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    workflow_id = Column(String, nullable=False)
+    agent_name = Column(String, nullable=False)
+    execution_date = Column(Date, nullable=False)
+    result_data = Column(Text)  # JSON string of agent results
+    created_at = Column(DateTime, default=datetime.utcnow)

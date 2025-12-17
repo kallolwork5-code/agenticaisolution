@@ -23,7 +23,17 @@ from app.utils.file_parsers import (
 )
 
 router = APIRouter()
-graph = build_ingestion_graph()
+
+# Lazy initialization of ingestion graph
+_graph = None
+
+def get_ingestion_graph():
+    """Get ingestion graph with lazy initialization"""
+    global _graph
+    if _graph is None:
+        _graph = build_ingestion_graph()
+        logger.info("Ingestion graph initialized on first use")
+    return _graph
 
 logger = logging.getLogger("ingestion-api")
 logging.basicConfig(level=logging.INFO)
@@ -83,6 +93,7 @@ async def ingest(file: UploadFile = File(...)):
         "sample_rows": df.head(3).to_dict(orient="records"),
     }
 
+    graph = get_ingestion_graph()
     final_state = graph.invoke(state)
     log_agent_decision(final_state)
 

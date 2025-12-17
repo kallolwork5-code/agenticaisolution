@@ -6,14 +6,14 @@ import MainCarousel from './MainCarousel'
 import PromptRepository from '../pages/PromptRepository'
 import DataManagement from '../pages/DataManagement'
 import AnalyticsDashboard from '../pages/AnalyticsDashboard'
-import AIEngine from '../pages/AIEngine'
+import AIWorkflows from '../pages/AIWorkflows'
 import Chatbot from '../pages/Chatbot'
 
 interface DashboardProps {
   onLogout: () => void
 }
 
-type PageType = 'carousel' | 'prompts' | 'data' | 'dashboard' | 'ai-engine' | 'chatbot'
+type PageType = 'carousel' | 'prompts' | 'data' | 'dashboard' | 'ai-workflows' | 'chatbot'
 
 const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [currentPage, setCurrentPage] = useState<PageType>('carousel')
@@ -34,8 +34,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         return <DataManagement onBack={handleBack} />
       case 'dashboard':
         return <AnalyticsDashboard onBack={handleBack} />
-      case 'ai-engine':
-        return <AIEngine onBack={handleBack} />
+      case 'ai-workflows':
+        return <AIWorkflows onBack={handleBack} />
       case 'chatbot':
         return <Chatbot onBack={handleBack} />
       default:
