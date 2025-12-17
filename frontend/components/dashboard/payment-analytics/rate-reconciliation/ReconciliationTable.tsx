@@ -65,7 +65,7 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
 
   // Get unique acquirers for filter
   const uniqueAcquirers = useMemo(() => {
-    const acquirers = [...new Set(data.map(row => row.acquirer))]
+    const acquirers = Array.from(new Set(data.map(row => row.acquirer)))
     return acquirers.sort()
   }, [data])
 
@@ -298,7 +298,7 @@ const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
                     )}
                   </td>
                 ))}
-              </tr>
+              </motion.tr>
             ))}
           </tbody>
         </table>

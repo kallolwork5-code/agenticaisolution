@@ -23,6 +23,7 @@ from app.api.websocket import router as websocket_router
 from app.api.insights import router as insights_router
 from app.api.upload import router as upload_router
 from app.api.classification import router as classification_router
+from app.api.chatbot import router as chatbot_router
 from app.db.database import engine
 from app.db import models
 from app.models.user import User
@@ -55,6 +56,7 @@ app.include_router(websocket_router)
 app.include_router(insights_router, prefix="/api")
 app.include_router(upload_router, prefix="/api/upload")
 app.include_router(classification_router, prefix="/api/classification")
+app.include_router(chatbot_router, prefix="/api/chatbot")
 
 @app.get("/health")
 def health():

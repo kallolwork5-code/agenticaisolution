@@ -7,7 +7,7 @@ import PromptRepository from '../pages/PromptRepository'
 import DataManagement from '../pages/DataManagement'
 import PaymentAnalyticsDashboard from './payment-analytics/PaymentAnalyticsDashboard-simple'
 import AIWorkflows from '../pages/AIWorkflows'
-import Chatbot from '../pages/Chatbot'
+import AIChatbot from '../pages/AIChatbot'
 
 interface DashboardProps {
   onLogout: () => void
@@ -37,7 +37,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       case 'ai-workflows':
         return <AIWorkflows onBack={handleBack} />
       case 'chatbot':
-        return <Chatbot onBack={handleBack} />
+        return <AIChatbot onBack={handleBack} />
       default:
         return <MainCarousel onNavigate={handleNavigate} />
     }

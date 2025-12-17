@@ -215,6 +215,7 @@ const PaymentAnalyticsDashboard: React.FC<PaymentAnalyticsDashboardProps> = ({ o
           </div>
         </motion.div>
       </div>
+
     </div>
   )
 }

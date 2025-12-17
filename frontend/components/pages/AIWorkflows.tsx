@@ -1921,7 +1921,7 @@ const AIWorkflows: React.FC<AIWorkflowsProps> = ({ onBack }) => {
                                   key={i}
                                   className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded text-xs"
                                 >
-                                  {'agent_name' in agent ? agent.agent_name.split(' ')[0] : agent.agent_name.split(' ')[0]}
+                                  {(agent as any)?.agent_name?.split(' ')[0] || 'Agent'}
                                 </span>
                               ))}
                               {(execution.agent_details || execution.steps)?.length > 2 && (

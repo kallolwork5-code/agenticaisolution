@@ -177,7 +177,7 @@ const SettlementPeriodTable: React.FC<SettlementPeriodTableProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-            <span className="text-white/70">> {SLA_THRESHOLDS.SETTLEMENT_DAYS.WARNING} days (Warning)</span>
+            <span className="text-white/70">&gt; {SLA_THRESHOLDS.SETTLEMENT_DAYS.WARNING} days (Warning)</span>
           </div>
         </div>
       </div>

@@ -15,4 +15,4 @@ const TestSLADelayDashboard: React.FC = () => {
   )
 }
 
-export default TestSLADelayDashboard"
+export default TestSLADelayDashboard

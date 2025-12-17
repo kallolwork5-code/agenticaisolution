@@ -313,4 +313,4 @@ const SLADelaySummaryPanel: React.FC<SLADelaySummaryPanelProps> = ({
   )
 }
 
-export default SLADelaySummaryPanel"
+export default SLADelaySummaryPanel

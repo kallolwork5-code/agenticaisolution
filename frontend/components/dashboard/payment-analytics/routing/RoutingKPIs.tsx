@@ -63,4 +63,4 @@ const RoutingKPIs: React.FC = () => {
   )
 }
 
-export default RoutingKPIs"
+export default RoutingKPIs
