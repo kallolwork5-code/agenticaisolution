@@ -109,9 +109,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">
               CollectiSense
             </h1>
-            <p className="text-xl mb-8 text-green-100">
-              Digital Reconciliation Platform
-            </p>
+
             <div className="space-y-4">
               <motion.div 
                 className="flex items-center space-x-3"
