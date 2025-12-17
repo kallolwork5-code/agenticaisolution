@@ -5,7 +5,7 @@ import { LogOut, User, Bell, Settings } from 'lucide-react'
 import MainCarousel from './MainCarousel'
 import PromptRepository from '../pages/PromptRepository'
 import DataManagement from '../pages/DataManagement'
-import AnalyticsDashboard from '../pages/AnalyticsDashboard'
+import PaymentAnalyticsDashboard from './payment-analytics/PaymentAnalyticsDashboard-simple'
 import AIWorkflows from '../pages/AIWorkflows'
 import Chatbot from '../pages/Chatbot'
 
@@ -33,7 +33,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       case 'data':
         return <DataManagement onBack={handleBack} />
       case 'dashboard':
-        return <AnalyticsDashboard onBack={handleBack} />
+        return <PaymentAnalyticsDashboard onBack={handleBack} />
       case 'ai-workflows':
         return <AIWorkflows onBack={handleBack} />
       case 'chatbot':
