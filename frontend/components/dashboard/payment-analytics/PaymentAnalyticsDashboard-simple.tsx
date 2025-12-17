@@ -8,6 +8,12 @@ import { PaymentAnalyticsDashboardProps } from './types'
 import { DASHBOARD_TABS } from './constants'
 import { slaDelayData } from './data'
 
+// Import chart components
+import ChartContainer from '../../charts/ChartContainer'
+import InteractiveBarChart from '../../charts/InteractiveBarChart'
+import InteractivePieChart from '../../charts/InteractivePieChart'
+import { BarChartData, PieChartData } from '@/lib/chart-types'
+
 // Simple dashboard navigation
 const SimpleDashboardNavigation: React.FC<{
   activeTab: string
@@ -28,6 +34,22 @@ const SimpleDashboardNavigation: React.FC<{
             const isActive = activeTab === tab.id
             const Icon = tab.icon
             
+            // Get theme color based on tab
+            const getTabTheme = (tabId: string) => {
+              switch (tabId) {
+                case 'executive':
+                  return 'text-blue-400 border-blue-400 bg-blue-500/10'
+                case 'rate-reconciliation':
+                  return 'text-orange-400 border-orange-400 bg-orange-500/10'
+                case 'sla-delay':
+                  return 'text-red-400 border-red-400 bg-red-500/10'
+                case 'routing-compliance':
+                  return 'text-purple-400 border-purple-400 bg-purple-500/10'
+                default:
+                  return 'text-blue-400 border-blue-400 bg-blue-500/10'
+              }
+            }
+            
             return (
               <button
                 key={tab.id}
@@ -36,7 +58,7 @@ const SimpleDashboardNavigation: React.FC<{
                   flex items-center gap-2 px-4 py-4 border-b-2 font-medium text-sm
                   transition-all duration-200
                   ${isActive 
-                    ? 'text-blue-400 border-blue-400 bg-blue-500/10' 
+                    ? getTabTheme(tab.id)
                     : 'text-white/60 border-transparent hover:text-white hover:border-white/50'
                   }
                 `}
@@ -204,66 +226,127 @@ const SimpleExecutiveDashboard: React.FC = () => {
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Acquirer Collection */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Acquirer-wise Collection</h3>
-          <div className="space-y-3">
-            {[
-              { name: 'HDFC', value: 1020, color: 'bg-blue-400' },
-              { name: 'ICICI', value: 740, color: 'bg-green-400' },
-              { name: 'Axis', value: 430, color: 'bg-yellow-400' },
-              { name: 'SBI', value: 231, color: 'bg-red-400' }
-            ].map((item) => (
-              <div key={item.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${item.color}`}></div>
-                  <span className="text-white/80 text-sm">{item.name}</span>
-                </div>
-                <span className="text-white font-medium">₹{item.value} Cr</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Acquirer Collection Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <ChartContainer title="Acquirer-wise Collection (in ₹ Cr)">
+            <InteractiveBarChart 
+              data={[
+                { name: 'HDFC', value: 1020, fill: '#3B82F6' },
+                { name: 'ICICI', value: 740, fill: '#10B981' },
+                { name: 'Axis', value: 430, fill: '#F59E0B' },
+                { name: 'SBI', value: 231, fill: '#EF4444' }
+              ]}
+              title="Acquirer Performance"
+              height={250}
+              color="#3B82F6"
+            />
+          </ChartContainer>
+        </motion.div>
 
-        {/* Network Split */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Network-wise Split</h3>
-          <div className="space-y-3">
-            {[
-              { name: 'VISA', value: 48, color: 'bg-blue-500' },
-              { name: 'Mastercard', value: 32, color: 'bg-red-500' },
-              { name: 'RuPay', value: 15, color: 'bg-green-500' },
-              { name: 'Amex', value: 5, color: 'bg-purple-500' }
-            ].map((item) => (
-              <div key={item.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${item.color}`}></div>
-                  <span className="text-white/80 text-sm">{item.name}</span>
-                </div>
-                <span className="text-white font-medium">{item.value}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Network Distribution Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <ChartContainer title="Network-wise Split (in %)">
+            <InteractivePieChart 
+              data={[
+                { name: 'VISA', value: 48, fill: '#1E40AF' },
+                { name: 'Mastercard', value: 32, fill: '#DC2626' },
+                { name: 'RuPay', value: 15, fill: '#059669' },
+                { name: 'Amex', value: 5, fill: '#7C3AED' }
+              ]}
+              title="Network Distribution"
+              height={250}
+            />
+          </ChartContainer>
+        </motion.div>
 
-        {/* Card Type */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Card Type Classification</h3>
-          <div className="space-y-3">
-            {[
-              { name: 'Credit', value: 72, color: 'bg-blue-400' },
-              { name: 'Debit', value: 28, color: 'bg-green-400' }
-            ].map((item) => (
-              <div key={item.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${item.color}`}></div>
-                  <span className="text-white/80 text-sm">{item.name}</span>
-                </div>
-                <span className="text-white font-medium">{item.value}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Card Type Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <ChartContainer title="Card Type Classification">
+            <InteractivePieChart 
+              data={[
+                { name: 'Credit', value: 72, fill: '#3B82F6' },
+                { name: 'Debit', value: 28, fill: '#10B981' }
+              ]}
+              title="Card Types"
+              height={250}
+            />
+          </ChartContainer>
+        </motion.div>
+      </div>
+
+      {/* Additional Charts Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Settlement Period Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <ChartContainer title="Average Settlement Period (in Days)">
+            <InteractiveBarChart 
+              data={[
+                { name: 'HDFC', value: 1.8, fill: '#10B981' },
+                { name: 'ICICI', value: 2.4, fill: '#34D399' },
+                { name: 'Axis', value: 3.1, fill: '#F59E0B' },
+                { name: 'SBI', value: 2.9, fill: '#EF4444' }
+              ]}
+              title="Settlement Period"
+              height={250}
+              color="#10B981"
+            />
+          </ChartContainer>
+        </motion.div>
+
+        {/* On-us vs Off-us Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
+          <ChartContainer title="On-us vs Off-us Bifurcation">
+            <InteractivePieChart 
+              data={[
+                { name: 'On-us', value: 61, fill: '#3B82F6' },
+                { name: 'Off-us', value: 39, fill: '#10B981' }
+              ]}
+              title="Transaction Routing"
+              height={250}
+            />
+          </ChartContainer>
+        </motion.div>
+
+        {/* MDR Cost Breakdown Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+        >
+          <ChartContainer title="MDR Cost Breakdown (in ₹ Cr)">
+            <InteractiveBarChart 
+              data={[
+                { name: 'HDFC', value: 21.6, fill: '#3B82F6' },
+                { name: 'ICICI', value: 15.6, fill: '#10B981' },
+                { name: 'Axis', value: 9.1, fill: '#F59E0B' },
+                { name: 'SBI', value: 4.9, fill: '#EF4444' }
+              ]}
+              title="MDR Costs by Acquirer"
+              height={250}
+              color="#8B5CF6"
+            />
+          </ChartContainer>
+        </motion.div>
       </div>
 
       {/* Settlement Period Table */}
@@ -354,6 +437,67 @@ const SimpleRateReconciliationDashboard: React.FC = () => {
             <div className="text-green-200 text-xs">Potential savings identified</div>
           </div>
         </div>
+      </div>
+
+      {/* Charts Grid for Rate Reconciliation */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Error Distribution by Acquirer */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <ChartContainer title="Errors by Acquirer">
+            <InteractiveBarChart 
+              data={[
+                { name: 'Axis', value: 4, fill: '#F59E0B' },
+                { name: 'ICICI', value: 2, fill: '#10B981' },
+                { name: 'SBI', value: 2, fill: '#EF4444' }
+              ]}
+              title="Rate Reconciliation Errors"
+              height={250}
+              color="#F59E0B"
+            />
+          </ChartContainer>
+        </motion.div>
+
+        {/* Savings Distribution */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <ChartContainer title="Savings by Network">
+            <InteractivePieChart 
+              data={[
+                { name: 'VISA', value: 45, fill: '#1E40AF' },
+                { name: 'MC', value: 35, fill: '#DC2626' },
+                { name: 'RuPay', value: 20, fill: '#059669' }
+              ]}
+              title="Savings Distribution"
+              height={250}
+            />
+          </ChartContainer>
+        </motion.div>
+
+        {/* MDR Rate Comparison */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <ChartContainer title="Applied vs Agreed MDR">
+            <InteractiveBarChart 
+              data={[
+                { name: 'Applied', value: 2.4, fill: '#EF4444' },
+                { name: 'Agreed', value: 1.9, fill: '#10B981' }
+              ]}
+              title="Average MDR Rates"
+              height={250}
+              color="#EF4444"
+            />
+          </ChartContainer>
+        </motion.div>
       </div>
 
       {/* Reconciliation Table */}
@@ -495,7 +639,7 @@ const SimpleRoutingNonComplianceDashboard: React.FC = () => {
 }
 
 const PaymentAnalyticsDashboard: React.FC<PaymentAnalyticsDashboardProps> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState<string>(DASHBOARD_TABS.SLA_DELAY)
+  const [activeTab, setActiveTab] = useState<string>(DASHBOARD_TABS.EXECUTIVE)
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId)
@@ -521,9 +665,9 @@ const PaymentAnalyticsDashboard: React.FC<PaymentAnalyticsDashboardProps> = ({ o
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -inset-10 opacity-50">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
-          <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-green-500/10 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
-          <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-purple-500/10 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-500/10 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
+          <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-teal-500/10 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
         </div>
       </div>
 
@@ -546,7 +690,7 @@ const PaymentAnalyticsDashboard: React.FC<PaymentAnalyticsDashboardProps> = ({ o
             <div>
               <h1 className="text-2xl font-bold text-white flex items-center gap-3">
                 <BarChart3 className="w-7 h-7 text-blue-400" />
-                Payment Analytics Dashboard
+                Dashboard
               </h1>
               <p className="text-white/60 text-sm">
                 Comprehensive payment processing insights and compliance monitoring
