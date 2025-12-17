@@ -1,16 +1,16 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { 
-  ArrowLeft, 
-  Bot, 
-  Send, 
-  Loader2, 
-  History, 
-  ThumbsUp, 
-  ThumbsDown, 
-  Copy, 
-  Check, 
+import {
+  ArrowLeft,
+  Bot,
+  Send,
+  Loader2,
+  History,
+  ThumbsUp,
+  ThumbsDown,
+  Copy,
+  Check,
   Search,
   Plus,
   Moon,
@@ -256,7 +256,7 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
     const lines = content.split('\n')
     return lines.map((line, index) => {
       const boldFormatted = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      
+
       if (line.trim().startsWith('•') || line.trim().startsWith('-')) {
         return (
           <div key={index} className="ml-4 mb-1">
@@ -264,11 +264,11 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
           </div>
         )
       }
-      
+
       if (line.trim() === '') {
         return <br key={index} />
       }
-      
+
       return (
         <div key={index} className="mb-1">
           <span dangerouslySetInnerHTML={{ __html: boldFormatted }} />
@@ -293,7 +293,7 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
                 <X className={`w-4 h-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} />
               </button>
             </div>
-            
+
             {/* Search */}
             <div className="relative">
               <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -302,15 +302,14 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
                 placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full pl-10 pr-3 py-2 text-sm rounded-lg border ${
-                  theme === 'dark' 
-                    ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500'
-                } focus:outline-none focus:ring-2 focus:ring-green-500`}
+                className={`w-full pl-10 pr-3 py-2 text-sm rounded-lg border ${theme === 'dark'
+                  ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+                  : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500'
+                  } focus:outline-none focus:ring-2 focus:ring-green-500`}
               />
             </div>
           </div>
-          
+
           {/* Conversations List */}
           <div className="flex-1 overflow-y-auto">
             {filteredConversations.length === 0 ? (
@@ -325,11 +324,10 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
                   <button
                     key={conv.id}
                     onClick={() => loadConversation(conv)}
-                    className={`w-full p-3 mb-2 text-left rounded-lg transition-colors ${
-                      conversationId === conv.id
-                        ? theme === 'dark' ? 'bg-green-600/20 border border-green-500/30' : 'bg-green-50 border border-green-200'
-                        : theme === 'dark' ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
-                    }`}
+                    className={`w-full p-3 mb-2 text-left rounded-lg transition-colors ${conversationId === conv.id
+                      ? theme === 'dark' ? 'bg-green-600/20 border border-green-500/30' : 'bg-green-50 border border-green-200'
+                      : theme === 'dark' ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
+                      }`}
                   >
                     <div className={`font-medium text-sm mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                       {conv.title}
@@ -349,74 +347,102 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
       )}
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">      
-  {/* Header */}
-        <div className={`flex items-center justify-between p-4 border-b ${
-          theme === 'dark' ? 'border-green-500/20 bg-black' : 'border-gray-200 bg-white'
-        }`}>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onBack}
-              className={`p-2 hover:${theme === 'dark' ? 'bg-white/10' : 'bg-gray-100'} rounded-lg transition-colors`}
-              aria-label="Go back"
-            >
-              <ArrowLeft className={`w-5 h-5 ${theme === 'dark' ? 'text-white' : 'text-gray-700'}`} />
-            </button>
-            <div className="flex items-center gap-2">
-              <Bot className="w-6 h-6 text-green-400" />
-              <h1 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                CollectiSense AI Chatbot
-              </h1>
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <div className={`${theme === 'dark' ? 'bg-gradient-to-r from-gray-900 via-black to-gray-900' : 'bg-gradient-to-r from-gray-50 to-white'} border-b ${theme === 'dark' ? 'border-green-500/20' : 'border-gray-200'} p-6`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={onBack}
+                className={`w-10 h-10 rounded-lg ${theme === 'dark' ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'} flex items-center justify-center transition-colors`}
+                aria-label="Go back"
+              >
+                <ArrowLeft className={`w-5 h-5 ${theme === 'dark' ? 'text-white' : 'text-gray-700'}`} />
+              </button>
+              <div>
+                <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} flex items-center gap-3`}>
+                  <Bot className="w-8 h-8 text-green-400" />
+                  AI Chatbot
+                </h1>
+                <p className={`${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+                  Intelligent assistant for payment analytics and insights
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-green-400">
+              <Bot className="w-5 h-5" />
+              <span className="font-medium">Smart Analytics</span>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            {/* History Toggle */}
-            <button
-              onClick={() => setShowHistory(!showHistory)}
-              className={`p-2 hover:${theme === 'dark' ? 'bg-white/10' : 'bg-gray-100'} rounded-lg transition-colors relative`}
-              aria-label="Chat history"
-            >
-              <History className={`w-5 h-5 ${theme === 'dark' ? 'text-white' : 'text-gray-700'}`} />
-              {conversations.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full text-xs"></span>
-              )}
-            </button>
-            
-            {/* Export Button */}
-            {messages.length > 0 && (
+        </div>
+
+        {/* Action Bar */}
+        <div className={`${theme === 'dark' ? 'bg-black/50' : 'bg-white/50'} backdrop-blur-sm border-b ${theme === 'dark' ? 'border-white/10' : 'border-gray-200'} px-6 py-3`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {/* History Toggle */}
               <button
-                onClick={exportConversation}
-                className={`p-2 hover:${theme === 'dark' ? 'bg-white/10' : 'bg-gray-100'} rounded-lg transition-colors`}
-                aria-label="Export conversation"
+                onClick={() => setShowHistory(!showHistory)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${showHistory
+                  ? theme === 'dark' ? 'bg-green-600/20 text-green-400 border border-green-500/30' : 'bg-green-50 text-green-600 border border-green-200'
+                  : theme === 'dark' ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
+                aria-label="Chat history"
               >
-                <Download className={`w-5 h-5 ${theme === 'dark' ? 'text-white' : 'text-gray-700'}`} />
+                <History className="w-4 h-4" />
+                <span className="text-sm font-medium">History</span>
+                {conversations.length > 0 && (
+                  <span className={`px-2 py-0.5 text-xs rounded-full ${theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'}`}>
+                    {conversations.length}
+                  </span>
+                )}
               </button>
-            )}
-            
-            {/* New Conversation */}
-            {messages.length > 0 && (
-              <button
-                onClick={startNewConversation}
-                className={`p-2 hover:${theme === 'dark' ? 'bg-white/10' : 'bg-gray-100'} rounded-lg transition-colors`}
-                aria-label="New conversation"
-              >
-                <Plus className={`w-5 h-5 ${theme === 'dark' ? 'text-white' : 'text-gray-700'}`} />
-              </button>
-            )}
-            
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className={`p-2 hover:${theme === 'dark' ? 'bg-white/10' : 'bg-gray-100'} rounded-lg transition-colors`}
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-5 h-5 text-white" />
-              ) : (
-                <Moon className="w-5 h-5 text-gray-700" />
+
+              {/* New Conversation */}
+              {messages.length > 0 && (
+                <button
+                  onClick={startNewConversation}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${theme === 'dark' ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                  aria-label="New conversation"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="text-sm font-medium">New Chat</span>
+                </button>
               )}
-            </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Export Button */}
+              {messages.length > 0 && (
+                <button
+                  onClick={exportConversation}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${theme === 'dark' ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                  aria-label="Export conversation"
+                >
+                  <Download className="w-4 h-4" />
+                  <span className="text-sm font-medium">Export</span>
+                </button>
+              )}
+
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${theme === 'dark' ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? (
+                  <>
+                    <Sun className="w-4 h-4" />
+                    <span className="text-sm font-medium">Light</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-4 h-4" />
+                    <span className="text-sm font-medium">Dark</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -427,12 +453,12 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
               <Bot className="w-12 h-12 text-green-400 mx-auto mb-4" />
               <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>How can I help you today?</h2>
               <p className={`${theme === 'dark' ? 'text-white/60' : 'text-gray-600'} mb-6`}>Ask me about your payment data, cost savings, SLA compliance, or transaction analysis.</p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
                 {[
                   "What are my total cost savings?",
                   "Show me SLA breaches",
-                  "Analyze routing errors", 
+                  "Analyze routing errors",
                   "Compare MDR rates by acquirer",
                   "Which transactions had the highest fees?",
                   "Show me routing compliance issues",
@@ -442,11 +468,10 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
                   <button
                     key={index}
                     onClick={() => setInputValue(question)}
-                    className={`p-3 text-left border rounded-lg transition-colors ${
-                      theme === 'dark' 
-                        ? 'border-white/20 hover:border-green-500/50 hover:bg-white/5' 
-                        : 'border-gray-200 hover:border-green-500/50 hover:bg-green-50'
-                    }`}
+                    className={`p-3 text-left border rounded-lg transition-colors ${theme === 'dark'
+                      ? 'border-white/20 hover:border-green-500/50 hover:bg-white/5'
+                      : 'border-gray-200 hover:border-green-500/50 hover:bg-green-50'
+                      }`}
                   >
                     <span className={`text-sm ${theme === 'dark' ? 'text-white/80' : 'text-gray-700'}`}>{question}</span>
                   </button>
@@ -462,13 +487,12 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
                       <Bot className="w-4 h-4 text-green-400" />
                     </div>
                   )}
-                  
+
                   <div className={`max-w-2xl ${message.type === 'user' ? 'order-first' : ''}`}>
-                    <div className={`p-4 rounded-lg ${
-                      message.type === 'user' 
-                        ? 'bg-green-600 text-white' 
-                        : theme === 'dark' ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'
-                    }`}>
+                    <div className={`p-4 rounded-lg ${message.type === 'user'
+                      ? 'bg-green-600 text-white'
+                      : theme === 'dark' ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'
+                      }`}>
                       {message.type === 'user' ? (
                         <p>{message.content}</p>
                       ) : (
@@ -477,16 +501,15 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Message Actions */}
                     {message.type === 'assistant' && (
                       <div className="flex items-center gap-2 mt-2">
                         {/* Copy Button */}
                         <button
                           onClick={() => copyMessage(message.content, message.id)}
-                          className={`p-1 rounded transition-colors ${
-                            theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-gray-200'
-                          }`}
+                          className={`p-1 rounded transition-colors ${theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-gray-200'
+                            }`}
                           title="Copy message"
                         >
                           {copiedMessageId === message.id ? (
@@ -495,39 +518,37 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
                             <Copy className={`w-3 h-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} />
                           )}
                         </button>
-                        
+
                         {/* Reaction Buttons */}
                         <button
                           onClick={() => addReaction(message.id, 'thumbs_up')}
-                          className={`p-1 rounded transition-colors ${
-                            message.reactions?.some(r => r.type === 'thumbs_up')
-                              ? theme === 'dark' ? 'bg-green-600/20 text-green-400' : 'bg-green-100 text-green-600'
-                              : theme === 'dark' ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-200 text-gray-600'
-                          }`}
+                          className={`p-1 rounded transition-colors ${message.reactions?.some(r => r.type === 'thumbs_up')
+                            ? theme === 'dark' ? 'bg-green-600/20 text-green-400' : 'bg-green-100 text-green-600'
+                            : theme === 'dark' ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-200 text-gray-600'
+                            }`}
                           title="Helpful"
                         >
                           <ThumbsUp className="w-3 h-3" />
                         </button>
-                        
+
                         <button
                           onClick={() => addReaction(message.id, 'thumbs_down')}
-                          className={`p-1 rounded transition-colors ${
-                            message.reactions?.some(r => r.type === 'thumbs_down')
-                              ? theme === 'dark' ? 'bg-red-600/20 text-red-400' : 'bg-red-100 text-red-600'
-                              : theme === 'dark' ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-200 text-gray-600'
-                          }`}
+                          className={`p-1 rounded transition-colors ${message.reactions?.some(r => r.type === 'thumbs_down')
+                            ? theme === 'dark' ? 'bg-red-600/20 text-red-400' : 'bg-red-100 text-red-600'
+                            : theme === 'dark' ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-200 text-gray-600'
+                            }`}
                           title="Not helpful"
                         >
                           <ThumbsDown className="w-3 h-3" />
                         </button>
-                        
+
                         {/* Timestamp */}
                         <span className={`text-xs ml-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
                           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     )}
-                    
+
                     {/* User message timestamp */}
                     {message.type === 'user' && (
                       <div className="flex justify-end mt-1">
@@ -537,7 +558,7 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
                       </div>
                     )}
                   </div>
-                  
+
                   {message.type === 'user' && (
                     <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-white text-sm font-medium">U</span>
@@ -545,12 +566,11 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
                   )}
                 </div>
               ))}
-              
+
               {isLoading && (
                 <div className="flex gap-4 justify-start">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'
-                  }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'
+                    }`}>
                     <Bot className={`w-4 h-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} />
                   </div>
                   <div className={`rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`}>
@@ -566,9 +586,8 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
         </div>
 
         {/* Input */}
-        <div className={`border-t p-4 ${
-          theme === 'dark' ? 'border-gray-700 bg-black' : 'border-gray-200 bg-white'
-        }`}>
+        <div className={`border-t p-4 ${theme === 'dark' ? 'border-gray-700 bg-black' : 'border-gray-200 bg-white'
+          }`}>
           <div className="max-w-4xl mx-auto">
             <div className="flex gap-3">
               <input
@@ -582,11 +601,10 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onBack }) => {
                   }
                 }}
                 placeholder="Ask about cost savings, SLA breaches, transactions..."
-                className={`flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors ${
-                  theme === 'dark' 
-                    ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                }`}
+                className={`flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors ${theme === 'dark'
+                  ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  }`}
                 disabled={isLoading}
               />
               <button
