@@ -9,7 +9,7 @@ import time
 
 def test_backend_endpoints():
     """Test the backend chatbot endpoints"""
-    base_url = "http://localhost:8000"
+    base_url = "http://localhost:9000"
     
     print("🧪 Testing Backend Chatbot Endpoints...")
     

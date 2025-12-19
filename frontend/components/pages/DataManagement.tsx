@@ -225,7 +225,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
     
     try {
       // Try to connect to WebSocket for real-time updates (optional)
-      ws = new WebSocket('ws://localhost:8000/api/upload/ws/upload')
+      ws = new WebSocket('ws://localhost:9000/api/upload/ws/upload')
       
       ws.onopen = () => {
         wsConnected = true
@@ -295,7 +295,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
         formData.append('prompt_id', selectedPrompt.id.toString())
       }
       
-      const response = await fetch('http://localhost:8000/api/upload/process', {
+      const response = await fetch('http://localhost:9000/api/upload/process', {
         method: 'POST',
         body: formData
       })
@@ -437,7 +437,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
   // Load upload history from database
   const loadUploadHistory = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/upload/history')
+      const response = await fetch('http://localhost:9000/api/upload/history')
       if (response.ok) {
         const history = await response.json()
         // Convert uploadDate strings to Date objects and parse aiInsights

@@ -31,7 +31,7 @@ cp .env.local.example .env.local
 
 3. Update the environment variables in `.env.local`:
 ```
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=http://localhost:9000
 ```
 
 ### Development
