@@ -9,7 +9,7 @@ import json
 def test_complete_flow():
     """Test the complete Talk2Data flow"""
     
-    base_url = "http://localhost:8000/api/talk2data"
+    base_url = "http://localhost:9000/api/talk2data"
     
     print("=== Testing Complete Talk2Data Flow ===\n")
     

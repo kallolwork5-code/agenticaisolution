@@ -232,7 +232,7 @@ async def main():
             print("\nNext steps:")
             print("1. Start the FastAPI server: python -m uvicorn app.main:app --reload")
             print("2. Access the AI Workflows UI at: http://localhost:3000/ai-workflows")
-            print("3. Test the API endpoints at: http://localhost:8000/api/ai-workflows/")
+            print("3. Test the API endpoints at: http://localhost:9000/api/ai-workflows/")
         
     except Exception as e:
         print(f"\n❌ Test failed with error: {e}")

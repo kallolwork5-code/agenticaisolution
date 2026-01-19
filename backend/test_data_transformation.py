@@ -14,7 +14,7 @@ def simulate_frontend_data_processing():
     
     try:
         # Step 1: Fetch data from API (same as frontend)
-        response = requests.get('http://localhost:8000/api/upload/history')
+        response = requests.get('http://localhost:9000/api/upload/history')
         if response.status_code != 200:
             print(f"❌ API Error: {response.status_code}")
             return False

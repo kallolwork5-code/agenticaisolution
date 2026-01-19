@@ -74,7 +74,7 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
   // Fetch prompts from API
   const fetchPrompts = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/prompts')
+      const response = await fetch('http://localhost:9000/api/prompts')
       if (response.ok) {
         const data = await response.json()
         setPrompts(data)
@@ -91,8 +91,8 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
   const fetchMetadata = async () => {
     try {
       const [rolesResponse, typesResponse] = await Promise.all([
-        fetch('http://localhost:8000/api/prompts/agents/roles'),
-        fetch('http://localhost:8000/api/prompts/types/all')
+        fetch('http://localhost:9000/api/prompts/agents/roles'),
+        fetch('http://localhost:9000/api/prompts/types/all')
       ])
       
       if (rolesResponse.ok) {
@@ -156,7 +156,7 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/prompts', {
+      const response = await fetch('http://localhost:9000/api/prompts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

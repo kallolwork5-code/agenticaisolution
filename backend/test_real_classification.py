@@ -16,7 +16,7 @@ def test_websocket_connection():
     print("=" * 30)
     
     try:
-        ws_url = "ws://localhost:8000/api/upload/ws/upload"
+        ws_url = "ws://localhost:9000/api/upload/ws/upload"
         print(f"Connecting to: {ws_url}")
         
         def on_message(ws, message):
@@ -61,7 +61,7 @@ def test_upload_without_websocket():
     
     try:
         # Get initial history count
-        response = requests.get('http://localhost:8000/api/upload/history')
+        response = requests.get('http://localhost:9000/api/upload/history')
         initial_count = len(response.json()) if response.status_code == 200 else 0
         print(f"Initial history count: {initial_count}")
         
@@ -78,7 +78,7 @@ TXN003,199.99,Amazon,AMEX,2024-12-16"""
         files = {'file': (test_filename, test_file, 'text/csv')}
         print(f"Uploading {test_filename}...")
         
-        response = requests.post('http://localhost:8000/api/upload/process', files=files)
+        response = requests.post('http://localhost:9000/api/upload/process', files=files)
         
         if response.status_code == 200:
             result = response.json()
@@ -95,7 +95,7 @@ TXN003,199.99,Amazon,AMEX,2024-12-16"""
             time.sleep(1)
             
             # Check if history was updated
-            response = requests.get('http://localhost:8000/api/upload/history')
+            response = requests.get('http://localhost:9000/api/upload/history')
             if response.status_code == 200:
                 new_history = response.json()
                 new_count = len(new_history)
@@ -140,7 +140,7 @@ def test_frontend_simulation():
     
     # Test the history API that frontend calls
     try:
-        response = requests.get('http://localhost:8000/api/upload/history')
+        response = requests.get('http://localhost:9000/api/upload/history')
         if response.status_code == 200:
             history = response.json()
             print(f"\n✅ History API working: {len(history)} records")

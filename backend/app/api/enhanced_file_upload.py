@@ -162,7 +162,7 @@ class EnhancedFileProcessor:
                 "classification": classification_result,
                 "deduplication": dedup_result,
                 "ingestion": ingestion_result,
-                "websocket_url": f"ws://localhost:8000/ws/upload/{file_id}"
+                "websocket_url": f"ws://localhost:9000/ws/upload/{file_id}"
             }
             
         except Exception as e:
@@ -374,7 +374,7 @@ async def enhanced_upload_file_no_auth(
         background_tasks.add_task(processor.process_file, file, file_id)
         
         # Return immediate response with WebSocket URL for progress tracking
-        websocket_url = f"ws://localhost:8000/ws/upload/{file_id}"
+        websocket_url = f"ws://localhost:9000/ws/upload/{file_id}"
         
         return JSONResponse(
             status_code=200,

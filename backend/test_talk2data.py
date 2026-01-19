@@ -6,7 +6,7 @@ Test script for Talk2Data API
 import requests
 import json
 
-BASE_URL = "http://localhost:8000/api/talk2data"
+BASE_URL = "http://localhost:9000/api/talk2data"
 
 def test_get_documents():
     """Test getting available documents"""

@@ -14,7 +14,7 @@ def test_upload_history_api():
     
     try:
         # Test API endpoint
-        response = requests.get('http://localhost:8000/api/upload/history')
+        response = requests.get('http://localhost:9000/api/upload/history')
         print(f"✅ API Status: {response.status_code}")
         
         if response.status_code != 200:

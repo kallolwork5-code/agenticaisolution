@@ -9,7 +9,7 @@ import json
 def test_chat_api():
     """Test the chat API directly"""
     
-    url = "http://localhost:8000/api/talk2data/chat"
+    url = "http://localhost:9000/api/talk2data/chat"
     
     payload = {
         "message": "What is the model accuracy?",

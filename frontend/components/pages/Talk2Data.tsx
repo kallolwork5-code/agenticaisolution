@@ -63,7 +63,7 @@ const Talk2Data: React.FC<Talk2DataProps> = ({ onBack }) => {
   const loadDocuments = async () => {
     try {
       setIsLoadingDocuments(true)
-      const response = await fetch('http://localhost:8000/api/talk2data/documents')
+      const response = await fetch('http://localhost:9000/api/talk2data/documents')
       if (response.ok) {
         const docs = await response.json()
         setDocuments(docs)
@@ -100,7 +100,7 @@ const Talk2Data: React.FC<Talk2DataProps> = ({ onBack }) => {
     setIsLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8000/api/talk2data/chat', {
+      const response = await fetch('http://localhost:9000/api/talk2data/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

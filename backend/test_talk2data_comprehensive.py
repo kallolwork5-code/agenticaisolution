@@ -9,7 +9,7 @@ import json
 def test_comprehensive_talk2data():
     """Comprehensive test of Talk2Data functionality"""
     
-    BASE_URL = "http://localhost:8000/api/talk2data"
+    BASE_URL = "http://localhost:9000/api/talk2data"
     
     print("🚀 COMPREHENSIVE TALK2DATA TEST")
     print("=" * 50)

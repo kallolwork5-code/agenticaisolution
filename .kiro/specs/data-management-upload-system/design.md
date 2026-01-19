@@ -443,7 +443,7 @@ const useAgentThinking = (uploadId: string) => {
   const [thoughts, setThoughts] = useState<AgentThought[]>([])
   
   useEffect(() => {
-    const ws = new WebSocket(`ws://localhost:8000/ws/thinking/${uploadId}`)
+    const ws = new WebSocket(`ws://localhost:9000/ws/thinking/${uploadId}`)
     
     ws.onmessage = (event) => {
       const thought: AgentThought = JSON.parse(event.data)

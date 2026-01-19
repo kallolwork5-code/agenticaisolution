@@ -300,7 +300,7 @@ def print_test_summary():
     print()
     print("🚀 Next Steps:")
     print("1. Start the FastAPI server: uvicorn app.main:app --reload")
-    print("2. Test API endpoints at http://localhost:8000/docs")
+    print("2. Test API endpoints at http://localhost:9000/docs")
     print("3. Connect frontend to backend APIs")
     print("4. Test WebSocket real-time updates")
     print("5. Verify dashboard data visualization")

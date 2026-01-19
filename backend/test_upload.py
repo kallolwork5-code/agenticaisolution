@@ -11,7 +11,7 @@ def test_upload_api():
     """Test the file upload API endpoint"""
     
     # API endpoint
-    url = "http://localhost:8000/api/files/upload"
+    url = "http://localhost:9000/api/files/upload"
     
     # Create a simple test CSV file
     test_data = """transaction_id,amount,currency,merchant_id,timestamp
@@ -45,14 +45,14 @@ TXN003,75.25,EUR,MERCH001,2024-01-15T12:00:00Z"""
                 # Test status endpoint
                 file_id = response.json().get('file_id')
                 if file_id:
-                    status_url = f"http://localhost:8000/api/files/status/{file_id}"
+                    status_url = f"http://localhost:9000/api/files/status/{file_id}"
                     status_response = requests.get(status_url)
                     print(f"Status Response: {status_response.json()}")
             else:
                 print("❌ Upload test failed!")
                 
     except requests.exceptions.ConnectionError:
-        print("❌ Could not connect to API. Make sure the backend is running on http://localhost:8000")
+        print("❌ Could not connect to API. Make sure the backend is running on http://localhost:9000")
     except Exception as e:
         print(f"❌ Test failed with error: {str(e)}")
     finally:
@@ -63,7 +63,7 @@ TXN003,75.25,EUR,MERCH001,2024-01-15T12:00:00Z"""
 def test_health_endpoint():
     """Test the health endpoint"""
     try:
-        response = requests.get("http://localhost:8000/health")
+        response = requests.get("http://localhost:9000/health")
         print(f"Health Check: {response.json()}")
         return response.status_code == 200
     except:

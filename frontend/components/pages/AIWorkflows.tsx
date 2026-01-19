@@ -1,38 +1,31 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Play, 
-  Square, 
-  Calendar as CalendarIcon, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  Loader2,
-  Bot,
-  BarChart3,
-  Workflow,
   ArrowLeft,
+  Play,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  Bot,
+  Calendar,
+  Clock,
+  Users,
   Zap
 } from 'lucide-react'
+import WorkflowBuilder from './WorkflowBuilder'
 
-// Simple types for AI Workflows
-interface Agent {
+interface Workflow {
   id: string
   name: string
   description: string
-  category: string
-  status: 'idle' | 'running' | 'completed' | 'error'
-  progress: number
-}
-
-interface WorkflowTemplate {
-  id: string
-  name: string
-  description: string
-  agents: string[]
-  estimated_duration: string
+  status: 'active' | 'draft' | 'paused'
+  lastRun: string
+  createdAt: string
+  nodeCount: number
+  creator: string
 }
 
 interface AIWorkflowsProps {
@@ -40,153 +33,75 @@ interface AIWorkflowsProps {
 }
 
 const AIWorkflows: React.FC<AIWorkflowsProps> = ({ onBack }) => {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('comprehensive_payment_analysis')
-  const [availableAgents, setAvailableAgents] = useState<Agent[]>([])
-  const [workflowTemplates, setWorkflowTemplates] = useState<WorkflowTemplate[]>([])
-  const [isExecuting, setIsExecuting] = useState(false)
-  const [orchestratorLogs, setOrchestratorLogs] = useState<string[]>([])
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected')
+  const [view, setView] = useState<'list' | 'builder'>('list')
+  const [selectedWorkflow, setSelectedWorkflow] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
-  // Initialize dummy data
-  useEffect(() => {
-    const dummyAgents: Agent[] = [
-      {
-        id: 'sla_compliance',
-        name: 'SLA Compliance Agent',
-        description: 'Monitors SLA compliance and identifies breaches in payment processing',
-        category: 'Compliance',
-        status: 'idle',
-        progress: 0
-      },
-      {
-        id: 'routing_optimization',
-        name: 'Routing Optimization Agent',
-        description: 'Optimizes payment routing for better success rates and lower costs',
-        category: 'Routing',
-        status: 'idle',
-        progress: 0
-      },
-      {
-        id: 'rate_reconciliation',
-        name: 'Rate Reconciliation Agent',
-        description: 'Reconciles MDR rates and identifies discrepancies in billing',
-        category: 'Financial',
-        status: 'idle',
-        progress: 0
-      }
-    ]
+  // Dummy workflows data
+  const workflows: Workflow[] = [
+    {
+      id: 'wf_1',
+      name: 'Payment Processing Pipeline',
+      description: 'Complete payment processing with data classification, SLA monitoring, routing optimization, and cost calculation',
+      status: 'active',
+      lastRun: '2024-01-19 14:30:00',
+      createdAt: '2024-01-15 09:00:00',
+      nodeCount: 4,
+      creator: 'Admin User'
+    },
+    {
+      id: 'wf_2', 
+      name: 'Fraud Detection Workflow',
+      description: 'Advanced fraud detection and risk assessment pipeline',
+      status: 'active',
+      lastRun: '2024-01-19 13:45:00',
+      createdAt: '2024-01-10 11:30:00',
+      nodeCount: 3,
+      creator: 'Security Team'
+    },
+    {
+      id: 'wf_3',
+      name: 'Compliance Check Pipeline',
+      description: 'Regulatory compliance verification and reporting',
+      status: 'draft',
+      lastRun: 'Never',
+      createdAt: '2024-01-18 16:20:00',
+      nodeCount: 2,
+      creator: 'Compliance Officer'
+    }
+  ]
 
-    const dummyTemplates: WorkflowTemplate[] = [
-      {
-        id: 'comprehensive_payment_analysis',
-        name: 'Comprehensive Payment Analysis',
-        description: 'Complete analysis of payment operations and performance',
-        agents: ['sla_compliance', 'routing_optimization', 'rate_reconciliation'],
-        estimated_duration: '6-10 minutes'
-      },
-      {
-        id: 'compliance_monitoring',
-        name: 'Compliance Monitoring',
-        description: 'Monitor regulatory compliance and policy adherence',
-        agents: ['sla_compliance'],
-        estimated_duration: '3-5 minutes'
-      },
-      {
-        id: 'routing_optimization',
-        name: 'Routing Optimization',
-        description: 'Optimize payment routing for cost and success rates',
-        agents: ['routing_optimization'],
-        estimated_duration: '3-5 minutes'
-      }
-    ]
-
-    setAvailableAgents(dummyAgents)
-    setWorkflowTemplates(dummyTemplates)
-  }, [])
-
-  const addOrchestratorLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString()
-    setOrchestratorLogs(prev => [...prev, `[${timestamp}] ${message}`])
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-500/20 text-green-400 border-green-500/30'
+      case 'draft': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+      case 'paused': return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+    }
   }
 
-  const updateAgentStatus = (agentId: string, status: Agent['status'], progress: number) => {
-    setAvailableAgents(prev => prev.map(agent => 
-      agent.id === agentId ? { ...agent, status, progress } : agent
-    ))
+  const handleViewWorkflow = (workflowId: string) => {
+    setSelectedWorkflow(workflowId)
+    setIsModalOpen(true)
   }
 
-  const startWorkflow = async () => {
-    if (isExecuting) return
-    
-    setIsExecuting(true)
-    setOrchestratorLogs([])
-    setConnectionStatus('connecting')
-    
-    // Reset all agents
-    setAvailableAgents(prev => prev.map(agent => ({
-      ...agent,
-      status: 'idle' as const,
-      progress: 0
-    })))
-
-    addOrchestratorLog('🚀 Starting workflow execution...')
-    
-    // Simulate connection
-    setTimeout(() => {
-      setConnectionStatus('connected')
-      addOrchestratorLog('🔗 Real-time connection established')
-      
-      // Start agent execution simulation
-      const template = workflowTemplates.find(t => t.id === selectedTemplate)
-      if (template) {
-        addOrchestratorLog(`📋 Using template: ${template.name}`)
-        simulateAgentExecution(template.agents)
-      }
-    }, 1500)
+  const handleCreateNew = () => {
+    setSelectedWorkflow(null)
+    setView('builder')
   }
 
-  const simulateAgentExecution = (agentIds: string[]) => {
-    agentIds.forEach((agentId, index) => {
-      const agent = availableAgents.find(a => a.id === agentId)
-      if (!agent) return
-
-      const startDelay = index * 3000 // Stagger starts by 3 seconds
-      
-      setTimeout(() => {
-        addOrchestratorLog(`🎯 Starting ${agent.name}...`)
-        updateAgentStatus(agentId, 'running', 10)
-        
-        // Simulate progress updates
-        const progressSteps = [25, 50, 75, 90, 100]
-        progressSteps.forEach((progress, progressIndex) => {
-          setTimeout(() => {
-            updateAgentStatus(agentId, 'running', progress)
-            
-            if (progress === 100) {
-              updateAgentStatus(agentId, 'completed', 100)
-              addOrchestratorLog(`✅ ${agent.name} completed successfully`)
-              
-              // Check if all agents are done
-              if (index === agentIds.length - 1) {
-                setTimeout(() => {
-                  addOrchestratorLog('🎉 All agents completed successfully!')
-                  addOrchestratorLog('✨ Workflow orchestration completed!')
-                  setIsExecuting(false)
-                  setConnectionStatus('disconnected')
-                }, 1000)
-              }
-            }
-          }, (progressIndex + 1) * 1000)
-        })
-      }, startDelay)
-    })
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedWorkflow(null)
   }
 
-  const stopWorkflow = () => {
-    setIsExecuting(false)
-    setConnectionStatus('disconnected')
-    addOrchestratorLog('⏹️ Workflow stopped by user')
+  if (view === 'builder') {
+    return (
+      <WorkflowBuilder 
+        onBack={() => setView('list')}
+        workflowId={selectedWorkflow}
+      />
+    )
   }
 
   return (
@@ -208,221 +123,228 @@ const AIWorkflows: React.FC<AIWorkflowsProps> = ({ onBack }) => {
             </button>
             <div>
               <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                <Workflow className="w-8 h-8 text-green-400" />
+                <Zap className="w-8 h-8 text-green-400" />
                 AI Workflows
               </h1>
-              <p className="text-white/60">Visual agent orchestration for automated analysis and insights</p>
+              <p className="text-white/60">Manage and execute your intelligent workflow automations</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-green-400">
-            <Zap className="w-5 h-5" />
-            <span className="font-medium">Intelligent Orchestration</span>
-          </div>
+          
+          <motion.button
+            onClick={handleCreateNew}
+            className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Plus className="w-5 h-5" />
+            Create New Workflow
+          </motion.button>
         </motion.div>
 
-        {/* Control Panel */}
+        {/* Workflows Table */}
         <motion.div
-          className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-6 mb-8"
+          className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              {/* Date Selector */}
-              <div className="flex items-center gap-3">
-                <CalendarIcon className="w-5 h-5 text-green-400" />
-                <div>
-                  <label className="block text-xs text-white/60 mb-1">Execution Date</label>
-                  <input
-                    type="date"
-                    value={selectedDate.toISOString().split('T')[0]}
-                    onChange={(e) => setSelectedDate(new Date(e.target.value))}
-                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-green-500/50"
-                  />
-                </div>
-              </div>
+          <div className="p-6 border-b border-white/10">
+            <h2 className="text-xl font-bold text-white flex items-center gap-3">
+              <Bot className="w-6 h-6 text-blue-400" />
+              Existing Workflows
+            </h2>
+          </div>
 
-              {/* Workflow Selector */}
-              <div className="flex items-center gap-3">
-                <Workflow className="w-5 h-5 text-green-400" />
-                <div>
-                  <label className="block text-xs text-white/60 mb-1">Workflow Template</label>
-                  <select
-                    value={selectedTemplate}
-                    onChange={(e) => setSelectedTemplate(e.target.value)}
-                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white min-w-[200px] focus:outline-none focus:border-green-500/50"
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left p-4 text-sm font-semibold text-white/80">Name</th>
+                  <th className="text-left p-4 text-sm font-semibold text-white/80">Status</th>
+                  <th className="text-left p-4 text-sm font-semibold text-white/80">Nodes</th>
+                  <th className="text-left p-4 text-sm font-semibold text-white/80">Last Run</th>
+                  <th className="text-left p-4 text-sm font-semibold text-white/80">Creator</th>
+                  <th className="text-left p-4 text-sm font-semibold text-white/80">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {workflows.map((workflow, index) => (
+                  <motion.tr
+                    key={workflow.id}
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
                   >
-                    {workflowTemplates.map((template) => (
-                      <option key={template.id} value={template.id} className="bg-gray-800">
-                        {template.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Connection Status & Control Buttons */}
-            <div className="flex items-center gap-4">
-              {/* Connection Status */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg">
-                <div className={`w-2 h-2 rounded-full ${
-                  connectionStatus === 'connected' ? 'bg-green-400 animate-pulse' :
-                  connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' :
-                  connectionStatus === 'error' ? 'bg-red-400 animate-pulse' :
-                  'bg-gray-400'
-                }`} />
-                <span className={`text-xs font-medium ${
-                  connectionStatus === 'connected' ? 'text-green-400' :
-                  connectionStatus === 'connecting' ? 'text-yellow-400' :
-                  connectionStatus === 'error' ? 'text-red-400' :
-                  'text-gray-400'
-                }`}>
-                  {connectionStatus === 'connected' ? 'Live' :
-                   connectionStatus === 'connecting' ? 'Connecting...' :
-                   connectionStatus === 'error' ? 'Connection Issue' :
-                   'Offline'}
-                </span>
-              </div>
-
-              {/* Control Button */}
-              {!isExecuting ? (
-                <motion.button
-                  onClick={startWorkflow}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-black font-medium rounded-lg transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Play className="w-4 h-4" />
-                  Run Workflow
-                </motion.button>
-              ) : (
-                <motion.button
-                  onClick={stopWorkflow}
-                  className="flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Square className="w-4 h-4" />
-                  Stop Workflow
-                </motion.button>
-              )}
-            </div>
+                    <td className="p-4">
+                      <div>
+                        <div className="font-semibold text-white">{workflow.name}</div>
+                        <div className="text-sm text-white/60 mt-1">{workflow.description}</div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(workflow.status)}`}>
+                        {workflow.status.charAt(0).toUpperCase() + workflow.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2 text-white/80">
+                        <Bot className="w-4 h-4" />
+                        <span>{workflow.nodeCount} agents</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2 text-white/80">
+                        <Clock className="w-4 h-4" />
+                        <span className="text-sm">
+                          {workflow.lastRun === 'Never' ? 'Never' : new Date(workflow.lastRun).toLocaleString()}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2 text-white/80">
+                        <Users className="w-4 h-4" />
+                        <span className="text-sm">{workflow.creator}</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <motion.button
+                          onClick={() => handleViewWorkflow(workflow.id)}
+                          className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          title="View Workflow"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </motion.button>
+                        
+                        <motion.button
+                          onClick={() => {
+                            setSelectedWorkflow(workflow.id)
+                            setView('builder')
+                          }}
+                          className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          title="Edit Workflow"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </motion.button>
+                        
+                        {workflow.status === 'active' && (
+                          <motion.button
+                            className="p-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            title="Execute Workflow"
+                          >
+                            <Play className="w-4 h-4" />
+                          </motion.button>
+                        )}
+                        
+                        <motion.button
+                          className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          title="Delete Workflow"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </motion.button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </motion.div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Agent Status Panel */}
-          <div className="lg:col-span-2 space-y-6">
-            <motion.div
-              className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-                <Bot className="w-6 h-6 text-green-400" />
-                Agent Execution Status
-              </h2>
-              
-              <div className="grid grid-cols-1 gap-4">
-                {availableAgents.map((agent, index) => (
-                  <motion.div
-                    key={agent.id}
-                    className="border border-white/10 bg-white/5 rounded-xl p-4 hover:bg-white/10 transition-all duration-300"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.1 * index }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/10 rounded-lg">
-                          <Bot className="h-5 w-5 text-green-400" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-white text-sm">{agent.name}</h3>
-                          <p className="text-xs text-white/60">{agent.category}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {agent.status === 'completed' && <CheckCircle className="h-4 w-4 text-green-600" />}
-                        {agent.status === 'running' && <Loader2 className="h-4 w-4 animate-spin text-green-400" />}
-                        {agent.status === 'error' && <AlertCircle className="h-4 w-4 text-red-600" />}
-                        <span className="text-xs text-white/80 capitalize font-medium">
-                          {agent.status}
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-white/70 mb-4">{agent.description}</p>
-
-                    {/* Progress Bar */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-white/80 font-medium">Progress</span>
-                        <span className="text-white/60">{agent.progress}%</span>
-                      </div>
-                      <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-                        <motion.div 
-                          className={`h-2 rounded-full transition-all duration-500 ${
-                            agent.status === 'completed' ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
-                            agent.status === 'running' ? 'bg-gradient-to-r from-blue-400 to-green-500' :
-                            agent.status === 'error' ? 'bg-gradient-to-r from-red-400 to-red-600' :
-                            'bg-gradient-to-r from-gray-400 to-gray-500'
-                          }`}
-                          style={{ width: `${agent.progress}%` }}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${agent.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+        {/* Quick Stats */}
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                <Zap className="w-5 h-5 text-green-400" />
               </div>
-            </motion.div>
-          </div>
-
-          {/* Orchestrator Logs */}
-          <div className="space-y-6">
-            <motion.div
-              className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-6"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
-              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
-                <BarChart3 className="w-6 h-6 text-blue-400" />
-                Orchestrator Logs
-              </h2>
-              
-              <div className="bg-black/30 rounded-lg p-4 h-96 overflow-y-auto">
-                {orchestratorLogs.length === 0 ? (
-                  <div className="text-center text-white/40 text-sm py-8">
-                    <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>No logs yet. Start a workflow to see real-time updates.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {orchestratorLogs.map((log, index) => (
-                      <motion.div
-                        key={index}
-                        className="text-sm text-green-300 font-mono"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        {log}
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
+              <div>
+                <div className="text-2xl font-bold text-white">{workflows.filter(w => w.status === 'active').length}</div>
+                <div className="text-sm text-white/60">Active Workflows</div>
               </div>
-            </motion.div>
+            </div>
           </div>
-        </div>
+          
+          <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                <Bot className="w-5 h-5 text-blue-400" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-white">{workflows.reduce((sum, w) => sum + w.nodeCount, 0)}</div>
+                <div className="text-sm text-white/60">Total Agents</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-white">{workflows.filter(w => w.lastRun !== 'Never').length}</div>
+                <div className="text-sm text-white/60">Executed Today</div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
+
+      {/* View Workflow Modal */}
+      <AnimatePresence>
+        {isModalOpen && selectedWorkflow && (
+          <motion.div
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleCloseModal}
+          >
+            <motion.div
+              className="bg-gray-900 rounded-2xl border border-white/20 w-full max-w-6xl h-[80vh] overflow-hidden"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-white/10">
+                <h3 className="text-xl font-bold text-white">
+                  {workflows.find(w => w.id === selectedWorkflow)?.name}
+                </h3>
+                <button
+                  onClick={handleCloseModal}
+                  className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="h-[calc(80vh-80px)]">
+                <WorkflowBuilder 
+                  onBack={handleCloseModal}
+                  workflowId={selectedWorkflow}
+                  isModal={true}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

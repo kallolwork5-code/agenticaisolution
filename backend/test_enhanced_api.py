@@ -19,7 +19,7 @@ Bank C,T003,75.25"""
         # Test the endpoint
         with open('test_upload.csv', 'rb') as f:
             files = {'file': ('test_upload.csv', f, 'text/csv')}
-            response = requests.post('http://localhost:8000/api/enhanced-upload/upload-no-auth', files=files, timeout=10)
+            response = requests.post('http://localhost:9000/api/enhanced-upload/upload-no-auth', files=files, timeout=10)
             
         print(f'Status: {response.status_code}')
         

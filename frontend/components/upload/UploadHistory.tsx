@@ -146,7 +146,7 @@ const UploadHistory: React.FC<UploadHistoryProps> = ({
   // Handle viewing full document summary
   const handleViewFullSummary = async (item: UploadHistoryItem) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/upload/summary/${item.id}`)
+      const response = await fetch(`http://localhost:9000/api/upload/summary/${item.id}`)
       if (response.ok) {
         const summaryData = await response.json()
         setFullSummaryContent(summaryData.summary)
@@ -164,7 +164,7 @@ const UploadHistory: React.FC<UploadHistoryProps> = ({
   // Handle downloading document summary
   const handleDownloadSummary = async (item: UploadHistoryItem) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/upload/summary/${item.id}/download`)
+      const response = await fetch(`http://localhost:9000/api/upload/summary/${item.id}/download`)
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
@@ -235,13 +235,13 @@ const UploadHistory: React.FC<UploadHistoryProps> = ({
       
       // Handle tables better
       .replace(/^\|(.+)\|$/gm, (match, content) => {
-        const cells = content.split('|').map(cell => cell.trim()).filter(cell => cell)
+        const cells = content.split('|').map((cell: string) => cell.trim()).filter((cell: string) => cell)
         if (cells.length === 0) return ''
         
         const isHeaderSeparator = content.includes('---') || content.includes('===')
         if (isHeaderSeparator) return '' // Skip separator rows
         
-        const cellsHtml = cells.map(cell => 
+        const cellsHtml = cells.map((cell: string) => 
           `<div class="px-3 py-2 text-sm">${cell}</div>`
         ).join('')
         
@@ -282,7 +282,7 @@ const UploadHistory: React.FC<UploadHistoryProps> = ({
     
     try {
       // Call backend API to generate insights using LangChain
-      const response = await fetch('http://localhost:8000/api/insights/generate', {
+      const response = await fetch('http://localhost:9000/api/insights/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

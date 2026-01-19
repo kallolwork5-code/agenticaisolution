@@ -4,7 +4,7 @@ import json
 # Test the schema API
 print("=== Testing Schema API ===")
 try:
-    response = requests.get('http://localhost:8000/api/schemas/list')
+    response = requests.get('http://localhost:9000/api/schemas/list')
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         data = response.json()
@@ -19,7 +19,7 @@ except Exception as e:
 
 print("\n=== Testing File List API ===")
 try:
-    response = requests.get('http://localhost:8000/api/files/list')
+    response = requests.get('http://localhost:9000/api/files/list')
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         data = response.json()
@@ -34,7 +34,7 @@ except Exception as e:
 
 print("\n=== Testing Health Check ===")
 try:
-    response = requests.get('http://localhost:8000/health')
+    response = requests.get('http://localhost:9000/health')
     print(f"Health Status: {response.status_code} - {response.json()}")
 except Exception as e:
     print(f"Error: {e}")

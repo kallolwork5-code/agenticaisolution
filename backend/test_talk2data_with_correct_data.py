@@ -9,7 +9,7 @@ import json
 def test_talk2data_with_existing_data():
     """Test Talk2Data API with existing ChromaDB data"""
     
-    BASE_URL = "http://localhost:8000/api/talk2data"
+    BASE_URL = "http://localhost:9000/api/talk2data"
     
     # Test getting documents
     print("1. Testing GET /documents...")

@@ -9,7 +9,7 @@ import json
 def test_cors_preflight():
     """Test CORS preflight request"""
     
-    url = "http://localhost:8000/api/talk2data/chat"
+    url = "http://localhost:9000/api/talk2data/chat"
     
     # OPTIONS request (preflight)
     try:
@@ -32,7 +32,7 @@ def test_cors_preflight():
 def test_browser_like_request():
     """Test browser-like request with all headers"""
     
-    url = "http://localhost:8000/api/talk2data/chat"
+    url = "http://localhost:9000/api/talk2data/chat"
     
     payload = {
         "message": "What is the model accuracy?",
@@ -68,7 +68,7 @@ def test_browser_like_request():
 def test_malformed_request():
     """Test potentially malformed request that might cause 500"""
     
-    url = "http://localhost:8000/api/talk2data/chat"
+    url = "http://localhost:9000/api/talk2data/chat"
     
     # Test with missing fields
     payloads = [

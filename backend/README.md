@@ -38,9 +38,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 The API will be available at:
-- API: [http://localhost:8000](http://localhost:8000)
-- Documentation: [http://localhost:8000/docs](http://localhost:8000/docs)
-- Alternative docs: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+- API: [http://localhost:9000](http://localhost:9000)
+- Documentation: [http://localhost:9000/docs](http://localhost:9000/docs)
+- Alternative docs: [http://localhost:9000/redoc](http://localhost:9000/redoc)
 
 ### Testing
 

@@ -16,7 +16,7 @@ def test_upload_flow():
     try:
         # Step 1: Check current upload history count
         print("📊 Step 1: Checking current upload history...")
-        response = requests.get('http://localhost:8000/api/upload/history')
+        response = requests.get('http://localhost:9000/api/upload/history')
         if response.status_code == 200:
             initial_history = response.json()
             initial_count = len(initial_history)
@@ -40,7 +40,7 @@ CUST003,89.75,Best Buy,AMEX"""
         print(f"\n⬆️  Step 3: Uploading file to /api/upload/process...")
         files = {'file': (test_filename, test_file, 'text/csv')}
         
-        response = requests.post('http://localhost:8000/api/upload/process', files=files)
+        response = requests.post('http://localhost:9000/api/upload/process', files=files)
         print(f"Upload response status: {response.status_code}")
         
         if response.status_code == 200:
@@ -62,7 +62,7 @@ CUST003,89.75,Best Buy,AMEX"""
         
         # Step 5: Check if upload history increased
         print(f"\n📊 Step 5: Checking updated upload history...")
-        response = requests.get('http://localhost:8000/api/upload/history')
+        response = requests.get('http://localhost:9000/api/upload/history')
         if response.status_code == 200:
             updated_history = response.json()
             updated_count = len(updated_history)

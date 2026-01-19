@@ -9,7 +9,7 @@ import json
 def test_empty_message_scenarios():
     """Test various empty message scenarios"""
     
-    url = "http://localhost:8000/api/talk2data/chat"
+    url = "http://localhost:9000/api/talk2data/chat"
     
     test_cases = [
         {"message": "", "expected_status": 400, "description": "Empty string"},

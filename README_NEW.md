@@ -128,8 +128,8 @@ npm run dev
 
 ### Access the Application
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- API Documentation: http://localhost:8000/docs
+- Backend API: http://localhost:9000
+- API Documentation: http://localhost:9000/docs
 
 ---
 

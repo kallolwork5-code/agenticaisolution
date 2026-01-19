@@ -16,7 +16,7 @@ def test_final_upload_system():
     try:
         # Step 1: Get initial state
         print("📊 Step 1: Getting initial upload history...")
-        response = requests.get('http://localhost:8000/api/upload/history')
+        response = requests.get('http://localhost:9000/api/upload/history')
         if response.status_code == 200:
             initial_history = response.json()
             initial_count = len(initial_history)
@@ -46,7 +46,7 @@ PROD004,Laptop Stand,39.99,Electronics,4.1"""
         files = {'file': (test_filename, test_file, 'text/csv')}
         
         upload_start = time.time()
-        response = requests.post('http://localhost:8000/api/upload/process', files=files)
+        response = requests.post('http://localhost:9000/api/upload/process', files=files)
         upload_time = time.time() - upload_start
         
         print(f"Upload completed in {upload_time:.2f} seconds")
@@ -72,7 +72,7 @@ PROD004,Laptop Stand,39.99,Electronics,4.1"""
         time.sleep(2)
         
         print(f"📊 Step 5: Checking updated history...")
-        response = requests.get('http://localhost:8000/api/upload/history')
+        response = requests.get('http://localhost:9000/api/upload/history')
         if response.status_code == 200:
             updated_history = response.json()
             updated_count = len(updated_history)
@@ -119,7 +119,7 @@ def test_frontend_data_compatibility():
     print("=" * 40)
     
     try:
-        response = requests.get('http://localhost:8000/api/upload/history')
+        response = requests.get('http://localhost:9000/api/upload/history')
         if response.status_code != 200:
             print(f"❌ API not available: {response.status_code}")
             return False

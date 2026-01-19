@@ -15,7 +15,7 @@ def test_ui_integration():
     try:
         # Step 1: Test API endpoint
         print("📡 Step 1: Testing API endpoint...")
-        response = requests.get('http://localhost:8000/api/upload/history')
+        response = requests.get('http://localhost:9000/api/upload/history')
         
         if response.status_code != 200:
             print(f"❌ API Error: {response.status_code} - {response.text}")
