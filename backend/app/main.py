@@ -33,7 +33,7 @@ from app.models.file_summary import FileSummary
 # Create all database tables
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="CollectiSense AI Backend")
+app = FastAPI(title="Flow AI Backend")
 
 # Add CORS middleware
 app.add_middleware(

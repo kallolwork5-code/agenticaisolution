@@ -70,7 +70,7 @@ def test_health_endpoint():
         return False
 
 if __name__ == "__main__":
-    print("🧪 Testing CollectiSense AI File Upload API")
+    print("🧪 Testing Flow AI File Upload API")
     print("=" * 50)
     
     # Test health first

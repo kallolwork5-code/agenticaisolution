@@ -54,7 +54,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       <header className="bg-black border-b border-green-500/20 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-green-400">CollectiSense</h1>
+            <h1 className="text-2xl font-bold text-green-400">Flow AI</h1>
           </div>
 
           <div className="flex items-center space-x-4">

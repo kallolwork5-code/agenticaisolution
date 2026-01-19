@@ -107,7 +107,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             transition={{ duration: 0.8 }}
           >
             <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">
-              CollectiSense
+              Flow AI
             </h1>
 
             <div className="space-y-4">
@@ -118,7 +118,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 transition={{ delay: 0.3, duration: 0.6 }}
               >
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-green-200">SLA Transaction Processing</span>
+                <span className="text-green-200">Intelligent Workflow Automation</span>
               </motion.div>
               <motion.div 
                 className="flex items-center space-x-3"
@@ -127,7 +127,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 transition={{ delay: 0.5, duration: 0.6 }}
               >
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-green-200">MDR Rate Management</span>
+                <span className="text-green-200">AI-Powered Document Processing</span>
               </motion.div>
               <motion.div 
                 className="flex items-center space-x-3"
@@ -136,7 +136,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 transition={{ delay: 0.7, duration: 0.6 }}
               >
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-green-200">Intelligent Routing Logic</span>
+                <span className="text-green-200">Advanced Analytics & Insights</span>
               </motion.div>
             </div>
           </motion.div>

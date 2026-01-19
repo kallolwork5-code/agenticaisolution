@@ -20,7 +20,7 @@ from app.agents.ai_query_agent import AIQueryAgent
 async def test_ai_engine():
     """Test the AI Engine with sample queries"""
     
-    print("🤖 Testing CollectiSense AI Engine")
+    print("🤖 Testing Flow AI Engine")
     print("=" * 50)
     
     # Check if OpenAI API key is configured
