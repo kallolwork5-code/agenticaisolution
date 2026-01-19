@@ -100,6 +100,9 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
 
   // Upload history from database
   const [uploadHistory, setUploadHistory] = useState<UploadHistoryItem[]>([])
+  
+  // History expansion state
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false)
 
   // Initialize progress stages
   const initializeProgressStages = () => {
@@ -225,7 +228,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
     
     try {
       // Try to connect to WebSocket for real-time updates (optional)
-      ws = new WebSocket('ws://localhost:9000/api/upload/ws/upload')
+      ws = new WebSocket('ws://localhost:8000/api/upload/ws/upload')
       
       ws.onopen = () => {
         wsConnected = true
@@ -295,7 +298,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
         formData.append('prompt_id', selectedPrompt.id.toString())
       }
       
-      const response = await fetch('http://localhost:9000/api/upload/process', {
+      const response = await fetch('http://localhost:8000/api/upload/process', {
         method: 'POST',
         body: formData
       })
@@ -450,19 +453,29 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
   // Load upload history from database
   const loadUploadHistory = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:9000/api/upload/history')
+      const response = await fetch('http://localhost:8000/api/upload/history')
       if (response.ok) {
         const history = await response.json()
         // Convert uploadDate strings to Date objects and parse aiInsights
         const processedHistory = history.map((item: any) => {
           let insights: DataInsight[] | undefined = undefined
           
-          // Parse aiInsights - it's a list with description containing JSON
+          // Parse aiInsights - check different formats
           if (item.aiInsights && Array.isArray(item.aiInsights) && item.aiInsights.length > 0) {
-            const firstInsight = item.aiInsights[0]
-            if (firstInsight.description && firstInsight.description.includes('```json')) {
-              try {
-                // Extract JSON from markdown code block
+            try {
+              const firstInsight = item.aiInsights[0]
+              
+              if (firstInsight.type === 'summary' && firstInsight.title && firstInsight.description) {
+                // Document summary type - convert to insights format
+                insights = [{
+                  type: 'quality',
+                  title: 'Document Processed',
+                  description: `Document "${item.fileName}" has been successfully processed and summarized.`,
+                  confidence: firstInsight.confidence || 0.9,
+                  actionable: false
+                }]
+              } else if (firstInsight.type === 'analysis' && firstInsight.description && firstInsight.description.includes('```json')) {
+                // Analysis type with JSON in description - extract the JSON
                 const desc = firstInsight.description
                 const jsonStart = desc.indexOf('[')
                 const jsonEnd = desc.lastIndexOf(']') + 1
@@ -470,9 +483,18 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
                   const jsonStr = desc.substring(jsonStart, jsonEnd)
                   insights = JSON.parse(jsonStr)
                 }
-              } catch (error) {
-                console.error('Failed to parse aiInsights JSON:', error)
+              } else if (firstInsight.type && firstInsight.title && firstInsight.description) {
+                // Already structured insights - use directly
+                insights = item.aiInsights.map((insight: any) => ({
+                  type: insight.type,
+                  title: insight.title,
+                  description: insight.description,
+                  confidence: insight.confidence || 0.8,
+                  actionable: insight.actionable || false
+                }))
               }
+            } catch (error) {
+              console.error('Failed to parse aiInsights:', error)
             }
           }
           
@@ -527,26 +549,98 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
   useEffect(() => {
     const loadPrompts = async () => {
       try {
-        const response = await fetch('/api/prompts')
+        const response = await fetch('http://localhost:8000/api/prompts/agents/roles')
         if (response.ok) {
-          const prompts = await response.json()
-          setAvailablePrompts(prompts)
+          const roles = await response.json()
+          // Transform agent roles into prompt options for the UI
+          const transformedPrompts = roles.map((role: string, index: number) => {
+            // Create user-friendly names and descriptions based on agent roles
+            const promptInfo = getPromptInfo(role)
+            return {
+              id: index + 1,
+              name: promptInfo.name,
+              description: promptInfo.description,
+              category: promptInfo.category,
+              agent_role: role
+            }
+          })
+          setAvailablePrompts(transformedPrompts)
         } else {
-          // Mock prompts for now
+          // Fallback to mock prompts
           setAvailablePrompts([
-            { id: 1, name: 'Financial Data Classifier', description: 'Specialized for transaction and payment data', category: 'finance' },
-            { id: 2, name: 'Customer Data Analyzer', description: 'Optimized for customer demographics and behavior', category: 'customer' },
-            { id: 3, name: 'Document Parser', description: 'General purpose document and text analysis', category: 'document' },
-            { id: 4, name: 'Rate Card Processor', description: 'Specialized for pricing and rate information', category: 'finance' },
-            { id: 5, name: 'Routing Rules Engine', description: 'Payment routing and decision logic', category: 'routing' }
+            { id: 1, name: 'Financial Data Classifier', description: 'Specialized for transaction and payment data', category: 'finance', agent_role: 'financial_classifier' },
+            { id: 2, name: 'Customer Data Analyzer', description: 'Optimized for customer demographics and behavior', category: 'customer', agent_role: 'customer_analyzer' },
+            { id: 3, name: 'Document Parser', description: 'General purpose document and text analysis', category: 'document', agent_role: 'document_summarizer' },
+            { id: 4, name: 'Rate Card Processor', description: 'Specialized for pricing and rate information', category: 'finance', agent_role: 'rate_processor' },
+            { id: 5, name: 'Routing Rules Engine', description: 'Payment routing and decision logic', category: 'routing', agent_role: 'routing_optimizer' }
           ])
         }
       } catch (error) {
         console.error('Failed to load prompts:', error)
+        // Fallback to mock prompts
+        setAvailablePrompts([
+          { id: 1, name: 'Financial Data Classifier', description: 'Specialized for transaction and payment data', category: 'finance', agent_role: 'financial_classifier' },
+          { id: 2, name: 'Customer Data Analyzer', description: 'Optimized for customer demographics and behavior', category: 'customer', agent_role: 'customer_analyzer' },
+          { id: 3, name: 'Document Parser', description: 'General purpose document and text analysis', category: 'document', agent_role: 'document_summarizer' },
+          { id: 4, name: 'Rate Card Processor', description: 'Specialized for pricing and rate information', category: 'finance', agent_role: 'rate_processor' },
+          { id: 5, name: 'Routing Rules Engine', description: 'Payment routing and decision logic', category: 'routing', agent_role: 'routing_optimizer' }
+        ])
       }
     }
     loadPrompts()
   }, [])
+
+  // Helper function to get prompt info based on agent role
+  const getPromptInfo = (role: string) => {
+    const roleMap: Record<string, { name: string; description: string; category: string }> = {
+      'document_summarizer': {
+        name: 'Document Summarizer',
+        description: 'AI-powered document analysis and summarization for compliance and validation reports',
+        category: 'document'
+      },
+      'data_classifier': {
+        name: 'Data Classifier',
+        description: 'Intelligent classification of uploaded data files and content analysis',
+        category: 'document'
+      },
+      'custom_fraud_detector': {
+        name: 'Fraud Detection Agent',
+        description: 'Advanced fraud detection and risk assessment for financial transactions',
+        category: 'finance'
+      },
+      'cost_calculation_agent': {
+        name: 'Cost Calculator',
+        description: 'Payment processing cost analysis and optimization recommendations',
+        category: 'finance'
+      },
+      'routing_optimization_agent': {
+        name: 'Routing Optimizer',
+        description: 'Payment routing optimization and decision logic analysis',
+        category: 'routing'
+      },
+      'compliance_checker_agent': {
+        name: 'Compliance Checker',
+        description: 'Regulatory compliance validation and audit trail analysis',
+        category: 'finance'
+      },
+      'performance_analysis_agent': {
+        name: 'Performance Analyzer',
+        description: 'System performance metrics and optimization insights',
+        category: 'routing'
+      },
+      'settlement_analysis_agent': {
+        name: 'Settlement Analyzer',
+        description: 'Settlement process analysis and reconciliation insights',
+        category: 'finance'
+      }
+    }
+
+    return roleMap[role] || {
+      name: role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      description: `AI agent for ${role.replace(/_/g, ' ')} processing and analysis`,
+      category: 'document'
+    }
+  }
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
@@ -586,20 +680,42 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
             </div>
           </motion.div>
 
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column - Upload Section (2/3 width) */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* File Upload Zone with Prompt Selector */}
+          {/* Main Content Grid - Responsive to History Expansion */}
+          <div className={`grid grid-cols-1 gap-8 transition-all duration-500 ${
+            isHistoryExpanded 
+              ? 'lg:grid-cols-2' // 50/50 split when expanded
+              : 'lg:grid-cols-3' // 2/3 + 1/3 split when collapsed
+          }`}>
+            {/* Left Column - Upload Section */}
+            <div className={`space-y-6 transition-all duration-500 ${
+              isHistoryExpanded 
+                ? 'lg:col-span-1' // Takes 1/2 when expanded
+                : 'lg:col-span-2' // Takes 2/3 when collapsed
+            }`}>
+              {/* File Upload Zone with Prompt Selector - Improved Layout */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="relative"
               >
-                <div className="flex gap-4">
+                {/* Upload Section Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">File Upload</h2>
+                    <p className="text-white/60 text-sm">Upload your data files for AI processing and analysis</p>
+                  </div>
+                  {selectedPrompt && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/30 rounded-lg">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <span className="text-green-400 text-sm font-medium">{selectedPrompt.name}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                   {/* Upload Zone - Takes most space */}
-                  <div className="flex-1">
+                  <div className="lg:col-span-3">
                     <FileUploadZone
                       onFileSelect={handleFileSelect}
                       acceptedTypes={['.csv', '.xlsx', '.xls', '.json', '.txt', '.pdf', '.doc', '.docx']}
@@ -608,22 +724,62 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
                     />
                   </div>
 
-                  {/* Prompt Selector Button */}
-                  <div className="flex flex-col gap-2">
-                    <button
-                      className="w-12 h-12 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-xl flex items-center justify-center transition-all duration-300 group"
-                      title="Select Processing Prompt"
-                      onClick={() => setShowPromptSelector(true)}
-                    >
-                      <svg className="w-6 h-6 text-green-400 group-hover:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </button>
-                    {selectedPrompt && (
-                      <div className="text-xs text-green-400 text-center max-w-12 truncate">
-                        {selectedPrompt.name}
+                  {/* Prompt Selector Panel */}
+                  <div className="lg:col-span-1 space-y-3">
+                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                      <h3 className="text-white font-medium text-sm mb-3 flex items-center gap-2">
+                        <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Processing Agent
+                      </h3>
+                      
+                      <button
+                        onClick={() => setShowPromptSelector(true)}
+                        className="w-full p-3 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-lg transition-all duration-300 group text-left"
+                      >
+                        <div className="text-green-400 text-sm font-medium mb-1">
+                          {selectedPrompt ? selectedPrompt.name : 'Select Agent'}
+                        </div>
+                        <div className="text-white/60 text-xs">
+                          {selectedPrompt ? selectedPrompt.description : 'Choose how your data should be processed'}
+                        </div>
+                      </button>
+                      
+                      {selectedPrompt && (
+                        <button
+                          onClick={() => setSelectedPrompt(null)}
+                          className="w-full mt-2 p-2 text-xs text-white/60 hover:text-white/80 transition-colors"
+                        >
+                          Clear Selection
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* Quick Stats */}
+                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                      <h3 className="text-white font-medium text-sm mb-3">Upload Stats</h3>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-white/60">Total Files:</span>
+                          <span className="text-white">{uploadHistory.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/60">Success Rate:</span>
+                          <span className="text-green-400">
+                            {uploadHistory.length > 0 
+                              ? Math.round((uploadHistory.filter(item => item.status === 'success').length / uploadHistory.length) * 100)
+                              : 0}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/60">Total Records:</span>
+                          <span className="text-white">
+                            {uploadHistory.reduce((acc, item) => acc + item.recordCount, 0).toLocaleString()}
+                          </span>
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -662,16 +818,42 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
               )}
             </div>
 
-            {/* Right Column - Upload History (1/3 width) */}
-            <div className="space-y-6">
+            {/* Right Column - Upload History with Expansion */}
+            <div className={`space-y-6 transition-all duration-500 ${
+              isHistoryExpanded 
+                ? 'lg:col-span-1' // Takes 1/2 when expanded
+                : 'lg:col-span-1' // Takes 1/3 when collapsed
+            }`}>
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.8 }}
+                className="relative"
               >
+                {/* Expansion Toggle Button */}
+                <button
+                  onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+                  className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-lg flex items-center justify-center transition-all duration-300 group"
+                  title={isHistoryExpanded ? "Collapse History" : "Expand History"}
+                >
+                  <motion.div
+                    animate={{ rotate: isHistoryExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <svg className="w-4 h-4 text-green-400 group-hover:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  </motion.div>
+                </button>
+                
                 <UploadHistory
                   items={uploadHistory}
                   onItemClick={setSelectedHistoryItem}
+                  className={`transition-all duration-500 ${
+                    isHistoryExpanded 
+                      ? 'min-h-[600px]' // Taller when expanded
+                      : 'min-h-[400px]' // Normal height when collapsed
+                  }`}
                 />
               </motion.div>
             </div>

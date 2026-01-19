@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (username: string, password: string) => {
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('http://localhost:8000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const token = localStorage.getItem('access_token')
         if (token) {
           // Call logout endpoint
-          await fetch('/api/auth/logout', {
+          await fetch('http://localhost:8000/api/auth/logout', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
