@@ -50,7 +50,7 @@ async def create_user(
                 )
         
         # Hash the password
-        hashed_password = auth_service.hash_password(user_data.password)
+        hashed_password = auth_service.get_password_hash(user_data.password)
         
         # Create new user
         new_user = User(
@@ -144,7 +144,8 @@ async def get_user_stats(
         inactive_users = total_users - active_users
         
         # Get recent registrations (last 30 days)
-        thirty_days_ago = datetime.utcnow().replace(day=datetime.utcnow().day - 30)
+        from datetime import timedelta
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
         recent_registrations = db.query(User).filter(
             User.created_at >= thirty_days_ago
         ).count()
@@ -311,7 +312,7 @@ async def change_password(
             )
         
         # Hash new password
-        new_hashed_password = auth_service.hash_password(password_data.new_password)
+        new_hashed_password = auth_service.get_password_hash(password_data.new_password)
         
         # Update password
         current_user.hashed_password = new_hashed_password
@@ -469,7 +470,7 @@ async def reset_user_password(
         temp_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
         
         # Hash temporary password
-        hashed_temp_password = auth_service.hash_password(temp_password)
+        hashed_temp_password = auth_service.get_password_hash(temp_password)
         
         # Update user password
         user.hashed_password = hashed_temp_password

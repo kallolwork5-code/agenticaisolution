@@ -48,8 +48,9 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
   const [agentRoles, setAgentRoles] = useState<string[]>([])
   const [promptTypes, setPromptTypes] = useState<string[]>([])
 
-  // Predefined agent roles for CollectiSense
+  // Predefined agent roles for CollectiSense - Document Summarizer first
   const predefinedAgents = [
+    'document_summarizer',
     'data_classification',
     'sla_agent', 
     'transaction_reconciliation',
@@ -140,28 +141,65 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
 
   // Create new prompt
   const handleCreatePrompt = async () => {
+    // Validation
+    if (!newPrompt.agent_role.trim()) {
+      alert('Please enter an agent role')
+      return
+    }
+    if (!newPrompt.prompt_type.trim()) {
+      alert('Please enter a prompt type')
+      return
+    }
+    if (!newPrompt.prompt_text.trim()) {
+      alert('Please enter prompt text')
+      return
+    }
+
     try {
       const response = await fetch('/api/prompts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newPrompt)
+        body: JSON.stringify({
+          ...newPrompt,
+          agent_role: newPrompt.agent_role.trim(),
+          prompt_type: newPrompt.prompt_type.trim(),
+          prompt_text: newPrompt.prompt_text.trim()
+        })
       })
 
       if (response.ok) {
         await fetchPrompts()
         setShowCreateModal(false)
         setNewPrompt({ agent_role: '', prompt_type: 'system', prompt_text: '' })
+      } else {
+        const error = await response.json()
+        alert(`Error creating prompt: ${error.detail || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error creating prompt:', error)
+      alert('Error creating prompt. Please try again.')
     }
   }
 
   // Update prompt
   const handleUpdatePrompt = async () => {
     if (!editingPrompt) return
+
+    // Validation
+    if (!editingPrompt.agent_role.trim()) {
+      alert('Please enter an agent role')
+      return
+    }
+    if (!editingPrompt.prompt_type.trim()) {
+      alert('Please enter a prompt type')
+      return
+    }
+    if (!editingPrompt.prompt_text.trim()) {
+      alert('Please enter prompt text')
+      return
+    }
 
     try {
       const response = await fetch(`/api/prompts/${editingPrompt.id}`, {
@@ -170,18 +208,22 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          agent_role: editingPrompt.agent_role,
-          prompt_type: editingPrompt.prompt_type,
-          prompt_text: editingPrompt.prompt_text
+          agent_role: editingPrompt.agent_role.trim(),
+          prompt_type: editingPrompt.prompt_type.trim(),
+          prompt_text: editingPrompt.prompt_text.trim()
         })
       })
 
       if (response.ok) {
         await fetchPrompts()
         setEditingPrompt(null)
+      } else {
+        const error = await response.json()
+        alert(`Error updating prompt: ${error.detail || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error updating prompt:', error)
+      alert('Error updating prompt. Please try again.')
     }
   }
 
@@ -204,12 +246,16 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
 
   const getAgentDisplayName = (agentRole: string) => {
     const names: Record<string, string> = {
+      'document_summarizer': 'Document Summarizer',
       'data_classification': 'Data Classification',
       'sla_agent': 'SLA Agent',
       'transaction_reconciliation': 'Transaction Reconciliation',
       'routing_agent': 'Routing Agent'
     }
-    return names[agentRole] || agentRole
+    // If it's a predefined agent, return the display name, otherwise format the agent role
+    return names[agentRole] || agentRole.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ')
   }
 
   const getTypeColor = (type: string) => {
@@ -219,7 +265,7 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
       'safety': 'text-white',
       'output': 'text-green-200'
     }
-    return colors[type] || 'text-gray-400'
+    return colors[type] || 'text-blue-400' // Custom types get blue color
   }
 
   const getTypeBadgeStyle = (type: string) => {
@@ -229,7 +275,7 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
       'safety': 'bg-white/20 text-white border-white/30',
       'output': 'bg-green-300/20 text-green-200 border-green-300/30'
     }
-    return styles[type] || 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+    return styles[type] || 'bg-blue-500/20 text-blue-400 border-blue-500/30' // Custom types get blue style
   }
 
   if (loading) {
@@ -315,7 +361,17 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
 
         {/* Agent Carousel */}
         <div className="space-y-8">
-          {predefinedAgents.map((agentRole, agentIndex) => {
+          {/* Get all unique agent roles from filtered prompts */}
+          {Array.from(new Set(filteredPrompts.map(p => p.agent_role)))
+            .sort((a, b) => {
+              // Sort predefined agents first, then custom agents alphabetically
+              const aPredefined = predefinedAgents.includes(a)
+              const bPredefined = predefinedAgents.includes(b)
+              if (aPredefined && !bPredefined) return -1
+              if (!aPredefined && bPredefined) return 1
+              return a.localeCompare(b)
+            })
+            .map((agentRole, agentIndex) => {
             const agentPrompts = filteredPrompts.filter(prompt => prompt.agent_role === agentRole)
             
             if (agentPrompts.length === 0) return null
@@ -331,7 +387,11 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
                 {/* Agent Header */}
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-green-500 rounded-2xl flex items-center justify-center">
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
+                      predefinedAgents.includes(agentRole) 
+                        ? 'bg-green-500' 
+                        : 'bg-blue-500'
+                    }`}>
                       <FileText className="w-8 h-8 text-black" />
                     </div>
                     <div>
@@ -340,6 +400,11 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
                       </h3>
                       <p className="text-white/60 text-sm">
                         {agentPrompts.length} prompt{agentPrompts.length !== 1 ? 's' : ''} available
+                        {!predefinedAgents.includes(agentRole) && (
+                          <span className="ml-2 px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+                            Custom
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -350,7 +415,13 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
                   {agentPrompts
                     .sort((a, b) => {
                       const typeOrder = ['system', 'task', 'safety', 'output']
-                      return typeOrder.indexOf(a.prompt_type) - typeOrder.indexOf(b.prompt_type)
+                      const aIndex = typeOrder.indexOf(a.prompt_type)
+                      const bIndex = typeOrder.indexOf(b.prompt_type)
+                      // If type is not in predefined list, put it at the end
+                      if (aIndex === -1 && bIndex === -1) return a.prompt_type.localeCompare(b.prompt_type)
+                      if (aIndex === -1) return 1
+                      if (bIndex === -1) return -1
+                      return aIndex - bIndex
                     })
                     .map((prompt, index) => (
                     <motion.div
@@ -433,7 +504,8 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
                   <label className="block text-sm font-medium text-white mb-3">
                     Agent Role
                   </label>
-                  <select
+                  <input
+                    type="text"
                     value={editingPrompt ? editingPrompt.agent_role : newPrompt.agent_role}
                     onChange={(e) => {
                       if (editingPrompt) {
@@ -442,20 +514,20 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
                         setNewPrompt({ ...newPrompt, agent_role: e.target.value })
                       }
                     }}
-                    className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300"
-                  >
-                    <option value="" className="bg-black text-white">Select Agent</option>
-                    {predefinedAgents.map(agent => (
-                      <option key={agent} value={agent} className="bg-black text-white">{getAgentDisplayName(agent)}</option>
-                    ))}
-                  </select>
+                    placeholder="Enter agent role (e.g., data_classification, custom_agent)"
+                    className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300"
+                  />
+                  <p className="text-white/40 text-xs mt-2">
+                    Common agents: document_summarizer, data_classification, sla_agent, transaction_reconciliation, routing_agent
+                  </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-white mb-3">
                     Prompt Type
                   </label>
-                  <select
+                  <input
+                    type="text"
                     value={editingPrompt ? editingPrompt.prompt_type : newPrompt.prompt_type}
                     onChange={(e) => {
                       if (editingPrompt) {
@@ -464,12 +536,32 @@ const PromptRepository: React.FC<PromptRepositoryProps> = ({ onBack }) => {
                         setNewPrompt({ ...newPrompt, prompt_type: e.target.value })
                       }
                     }}
-                    className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300"
-                  >
+                    placeholder="Enter prompt type (e.g., system, task, safety, output)"
+                    className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300"
+                  />
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <p className="text-white/40 text-xs mr-2">Quick select:</p>
                     {predefinedTypes.map(type => (
-                      <option key={type} value={type} className="bg-black text-white">{type}</option>
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => {
+                          if (editingPrompt) {
+                            setEditingPrompt({ ...editingPrompt, prompt_type: type })
+                          } else {
+                            setNewPrompt({ ...newPrompt, prompt_type: type })
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
+                          (editingPrompt ? editingPrompt.prompt_type : newPrompt.prompt_type) === type
+                            ? 'bg-green-500 text-black'
+                            : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
+                        }`}
+                      >
+                        {type}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
 
                 <div>
