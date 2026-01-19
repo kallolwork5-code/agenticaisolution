@@ -1,5 +1,5 @@
 """
-Upload API with real AI insights using LangChain
+Upload API with real AI insights using LangChain and enhanced document processing
 """
 
 from fastapi import APIRouter, UploadFile, File, WebSocket, WebSocketDisconnect, HTTPException
@@ -12,6 +12,7 @@ import os
 import pandas as pd
 import io
 from app.services.ai_insights_service import ai_insights_service
+from app.services.document_processor_service import document_processor
 from app.db.database import SessionLocal
 from app.db.models import Upload
 import logging
@@ -88,7 +89,63 @@ async def process_uploaded_file(file: UploadFile = File(...), prompt_id: Optiona
             "upload", 20, f"File {file.filename} received ({file_size} bytes)"
         )
         
-        # Parse file content based on type
+        # Determine file type and processing method
+        file_extension = file.filename.split('.')[-1].lower() if '.' in file.filename else ''
+        
+        # Check if it's a document file that needs special processing
+        document_extensions = ['pdf', 'docx', 'doc', 'txt']
+        is_document = file_extension in document_extensions
+        
+        if is_document:
+            # Process as document with chunking and vector storage
+            await websocket_manager.send_progress_update(
+                "analyze", 30, f"Processing {file_extension.upper()} document with enhanced document processor"
+            )
+            
+            document_result = await document_processor.process_document(
+                content, file.filename, file_extension, websocket_manager
+            )
+            
+            # Store document processing results
+            upload_record = await store_upload_record({
+                "file_name": file.filename,
+                "file_size": file_size,
+                "classification": "document",
+                "storage_location": "chromadb",
+                "confidence": 0.95,
+                "method": "document_processor",
+                "reasoning": f"Document processed with chunking and AI summarization",
+                "record_count": document_result.get('chunk_count', 1),
+                "status": "success",
+                "ai_insights": [{
+                    "type": "summary",
+                    "title": "Document Summary",
+                    "description": document_result.get('summary', 'Document processed successfully'),
+                    "confidence": 0.9,
+                    "actionable": False
+                }],
+                "document_metadata": document_result.get('metadata', {})
+            })
+            
+            await websocket_manager.send_progress_update(
+                "complete", 100, "Document processing and AI analysis complete!"
+            )
+            
+            return {
+                "success": True,
+                "upload_id": upload_record,
+                "classification": "document",
+                "storage_location": "chromadb",
+                "confidence": 0.95,
+                "method": "document_processor",
+                "reasoning": "Document processed with chunking and AI summarization",
+                "insights": document_result.get('summary', 'Document processed successfully'),
+                "record_count": document_result.get('chunk_count', 1),
+                "document_id": document_result.get('document_id'),
+                "metadata": document_result.get('metadata', {})
+            }
+        
+        # Handle structured data files (CSV, Excel, JSON) - existing logic
         file_data = None
         file_content_preview = ""
         

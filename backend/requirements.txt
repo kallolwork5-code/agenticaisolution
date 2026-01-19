@@ -13,6 +13,8 @@ chromadb
 openpyxl
 python-docx
 PyPDF2
+pypdf
+PyMuPDF
 sentence-transformers
 python-jose[cryptography]
 passlib[bcrypt]

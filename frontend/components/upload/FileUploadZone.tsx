@@ -158,6 +158,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
           
           <div className="text-white/40 text-sm space-y-1">
             <p>Supported formats: {acceptedTypes.join(', ')}</p>
+            <p>📊 Data files: CSV, Excel, JSON | 📄 Documents: PDF, Word, Text</p>
             <p>Maximum file size: {(maxSize / 1024 / 1024).toFixed(1)}MB</p>
           </div>
 

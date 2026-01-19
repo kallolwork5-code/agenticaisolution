@@ -425,10 +425,23 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
   
   // Helper function to determine file type from name
   const getFileTypeFromName = (fileName: string): string => {
+    const extension = fileName.split('.').pop()?.toLowerCase()
+    
+    // Document types
+    if (['pdf', 'doc', 'docx', 'txt'].includes(extension || '')) {
+      return 'Document'
+    }
+    
+    // Data types
     if (fileName.includes('transaction') || fileName.includes('payment')) return 'Transaction Data'
     if (fileName.includes('rate') || fileName.includes('mdr')) return 'Rate Card Data'
     if (fileName.includes('route') || fileName.includes('routing')) return 'Routing Data'
     if (fileName.includes('customer') || fileName.includes('user')) return 'Customer Data'
+    
+    // Default based on extension
+    if (['csv', 'xlsx', 'xls'].includes(extension || '')) return 'Structured Data'
+    if (extension === 'json') return 'JSON Data'
+    
     return 'Document Data'
   }
 
@@ -589,8 +602,8 @@ const DataManagement: React.FC<DataManagementProps> = ({ onBack }) => {
                   <div className="flex-1">
                     <FileUploadZone
                       onFileSelect={handleFileSelect}
-                      acceptedTypes={['.csv', '.xlsx', '.xls', '.json', '.txt', '.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg']}
-                      maxSize={100 * 1024 * 1024} // 100MB for larger files
+                      acceptedTypes={['.csv', '.xlsx', '.xls', '.json', '.txt', '.pdf', '.doc', '.docx']}
+                      maxSize={100 * 1024 * 1024} // 100MB for larger document files
                       isUploading={uploadState.isUploading}
                     />
                   </div>

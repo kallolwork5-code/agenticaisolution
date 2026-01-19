@@ -502,5 +502,156 @@ Content:
         
         return insights
 
+    async def generate_document_summary(self, 
+                                   text_content: str, 
+                                   filename: str,
+                                   websocket_manager=None) -> str:
+        """Generate document summary using document_summarizer prompts from database"""
+        
+        if not self.llm:
+            # Fallback summary
+            preview = text_content[:500] + "..." if len(text_content) > 500 else text_content
+            return f"Document: {filename}\n\nContent Preview:\n{preview}"
+        
+        try:
+            # Get document_summarizer prompts from database
+            db = SessionLocal()
+            try:
+                system_prompt = db.query(Prompt).filter(
+                    Prompt.agent_role == 'document_summarizer',
+                    Prompt.prompt_type == 'system',
+                    Prompt.is_active == True
+                ).first()
+                
+                task_prompt = db.query(Prompt).filter(
+                    Prompt.agent_role == 'document_summarizer',
+                    Prompt.prompt_type == 'task',
+                    Prompt.is_active == True
+                ).first()
+                
+                output_prompt = db.query(Prompt).filter(
+                    Prompt.agent_role == 'document_summarizer',
+                    Prompt.prompt_type == 'output',
+                    Prompt.is_active == True
+                ).first()
+                
+                if not (system_prompt and task_prompt and output_prompt):
+                    logger.warning("Document summarizer prompts not found in database, using fallback")
+                    preview = text_content[:500] + "..." if len(text_content) > 500 else text_content
+                    return f"Document: {filename}\n\nContent Preview:\n{preview}"
+                
+                if websocket_manager:
+                    await websocket_manager.send_agent_update(
+                        "prompt",
+                        f"Using Document Summarizer prompts: system, task, output (v{system_prompt.version})",
+                        0.95,
+                        {
+                            "agent_role": "document_summarizer",
+                            "prompt_types": ["system", "task", "output"],
+                            "model": "gpt-4o-mini"
+                        }
+                    )
+                
+                # Prepare the document content (truncate if too long)
+                max_content_length = 8000  # Leave room for prompts
+                if len(text_content) > max_content_length:
+                    truncated_content = text_content[:max_content_length] + "\n\n[Document truncated for analysis...]"
+                else:
+                    truncated_content = text_content
+                
+                # Create the analysis prompt
+                analysis_prompt = f"""
+{task_prompt.prompt_text}
+
+DOCUMENT TO ANALYZE:
+Filename: {filename}
+Content:
+{truncated_content}
+
+Please provide a comprehensive summary following the structure specified in the task prompt.
+"""
+                
+                # Generate summary using LLM
+                messages = [
+                    SystemMessage(content=system_prompt.prompt_text),
+                    HumanMessage(content=analysis_prompt)
+                ]
+                
+                if websocket_manager:
+                    await websocket_manager.send_agent_update(
+                        "analysis",
+                        f"Analyzing document content ({len(text_content)} chars) using AI summarization",
+                        0.8,
+                        {"content_length": len(text_content), "model": "gpt-4o-mini"}
+                    )
+                
+                response = await self.llm.ainvoke(messages)
+                summary = response.content
+                
+                # Apply output formatting if available
+                if output_prompt and summary:
+                    format_messages = [
+                        SystemMessage(content="You are a document formatting specialist. Apply the specified output format to the provided summary."),
+                        HumanMessage(content=f"""
+Please format the following document summary according to this output template:
+
+{output_prompt.prompt_text}
+
+SUMMARY TO FORMAT:
+{summary}
+
+Apply the formatting template while preserving all the analytical content.
+""")
+                    ]
+                    
+                    format_response = await self.llm.ainvoke(format_messages)
+                    formatted_summary = format_response.content
+                    
+                    if websocket_manager:
+                        await websocket_manager.send_agent_update(
+                            "decision",
+                            f"Generated comprehensive document summary ({len(formatted_summary)} chars)",
+                            0.9,
+                            {
+                                "summary_length": len(formatted_summary),
+                                "agent_role": "document_summarizer",
+                                "formatted": True
+                            }
+                        )
+                    
+                    return formatted_summary
+                else:
+                    if websocket_manager:
+                        await websocket_manager.send_agent_update(
+                            "decision",
+                            f"Generated document summary ({len(summary)} chars)",
+                            0.85,
+                            {
+                                "summary_length": len(summary),
+                                "agent_role": "document_summarizer",
+                                "formatted": False
+                            }
+                        )
+                    
+                    return summary
+                
+            finally:
+                db.close()
+                
+        except Exception as e:
+            logger.error(f"Error generating document summary: {e}")
+            if websocket_manager:
+                await websocket_manager.send_agent_update(
+                    "analysis",
+                    f"Document summarization failed, using fallback: {str(e)}",
+                    0.3,
+                    {"error": str(e)}
+                )
+            
+            # Fallback summary
+            preview = text_content[:500] + "..." if len(text_content) > 500 else text_content
+            return f"Document: {filename}\n\nContent Preview:\n{preview}"
+
+
 # Global instance
 ai_insights_service = AIInsightsService()
